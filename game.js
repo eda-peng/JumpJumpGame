@@ -59,15 +59,15 @@ let isGrounded = false;
 const LEVEL_CONFIGS = {
   1: { // 教學關 牆壁
     playerStart: { x: 40, y: 350 },
-    goal: { x: 700, y: 350, w: 40, h: 50 },
+    goal: { x: 700, y: 360, w: 40, h: 40 },
     customObjects: [
-      { x: 250, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
-      { x: 510, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 250, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
+      { x: 510, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
     ]
   },
   2: { // 教學關 平台
     playerStart: { x: 40, y: 350 },
-    goal: { x: 700, y: 50, w: 40, h: 50 },
+    goal: { x: 700, y: 60, w: 40, h: 40 },
     customObjects: [
       { x: 300, y: 300, w: 150, h: 30, color: 0x7f8c8d },
       { x: 450, y: 200, w: 150, h: 30, color: 0x7f8c8d },
@@ -76,36 +76,36 @@ const LEVEL_CONFIGS = {
   },
   3: { // 撞牆後回跳
     playerStart: { x: 100, y: 350 },
-    goal: { x: 80, y: 170, w: 40, h: 50 },
+    goal: { x: 80, y: 180, w: 40, h: 40 },
     customObjects: [
-      { x: 380, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 380, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
       { x: 40, y: 220, w: 250, h: 30, color: 0x7f8c8d }  // 地板
     ]
   },
   4: { // 抓時機跳
     playerStart: { x: 40, y: 350 },
-    goal: { x: 700, y: 350, w: 40, h: 50 },
+    goal: { x: 700, y: 360, w: 40, h: 40 },
     customObjects: [
-      { x: 120, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
-      { x: 250, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
-      { x: 380, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
-      { x: 510, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
-      { x: 630, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 120, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
+      { x: 250, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
+      { x: 380, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
+      { x: 510, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
+      { x: 630, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
     ]
   },
   5: { // 剛好踩蹬腳處往上爬
     playerStart: { x: 100, y: 350 },
-    goal: { x: 720, y: 20, w: 40, h: 50 },
+    goal: { x: 720, y: 30, w: 40, h: 40 },
     customObjects: [
-      { x: 720, y: 360, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處右
-      { x: 40, y: 200, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處左
+      { x: 720, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
+      { x: 40, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
       { x: 40, y: 240, w: 720, h: 30, color: 0x7f8c8d },  // 地板
       { x: 40, y: 80, w: 720, h: 30, color: 0x7f8c8d }  // 地板
     ]
   },
   6: { // 不能跳
     playerStart: { x: 100, y: 0 },
-    goal: { x: 720, y: 350, w: 40, h: 50 },
+    goal: { x: 720, y: 360, w: 40, h: 40 },
     customObjects: [
       { x: 90, y: 40, w: 670, h: 30, color: 0x7f8c8d },  // 地板
       { x: 40, y: 80, w: 670, h: 30, color: 0x7f8c8d },  // 地板
@@ -121,51 +121,51 @@ const LEVEL_CONFIGS = {
     playerStart: { x: 40, y: 350 },
     goal: { x: 180, y: 0, w: 40, h: 40 },
     customObjects: [
-      { x: 150, y: 280, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
-      { x: 350, y: 280, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
-      { x: 550, y: 280, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
-      { x: 50, y: 160, w: 100, h: 40, color: 0x95a5a6 }, // 中間層
-      { x: 250, y: 160, w: 100, h: 40, color: 0x95a5a6 }, // 中間層
-      { x: 450, y: 160, w: 100, h: 40, color: 0x95a5a6 }, // 中間層
-      { x: 650, y: 160, w: 100, h: 40, color: 0x95a5a6 }, // 中間層
-      { x: 150, y: 40, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
-      { x: 350, y: 40, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
-      { x: 550, y: 40, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
+      { x: 150, y: 280, w: 100, h: 40, color: 0x7f8c8d }, // 最下層
+      { x: 350, y: 280, w: 100, h: 40, color: 0x7f8c8d }, // 最下層
+      { x: 550, y: 280, w: 100, h: 40, color: 0x7f8c8d }, // 最下層
+      { x: 50, y: 160, w: 100, h: 40, color: 0x7f8c8d }, // 中間層
+      { x: 250, y: 160, w: 100, h: 40, color: 0x7f8c8d }, // 中間層
+      { x: 450, y: 160, w: 100, h: 40, color: 0x7f8c8d }, // 中間層
+      { x: 650, y: 160, w: 100, h: 40, color: 0x7f8c8d }, // 中間層
+      { x: 150, y: 40, w: 100, h: 40, color: 0x7f8c8d }, // 最下層
+      { x: 350, y: 40, w: 100, h: 40, color: 0x7f8c8d }, // 最下層
+      { x: 550, y: 40, w: 100, h: 40, color: 0x7f8c8d }, // 最下層
     ]
   },
   8: { // 不能掉到洞裡
     playerStart: { x: 40, y: 350 },
-    goal: { x: 700, y: 350, w: 40, h: 50 },
+    goal: { x: 700, y: 360, w: 40, h: 40 },
     customObjects: [
-      { x: 140, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
-      { x: 290, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
-      { x: 440, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
-      { x: 590, y: 320, w: 40, h: 80, color: 0x95a5a6 } // 矮牆
+      { x: 140, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆
+      { x: 290, y: 200, w: 40, h: 200, color: 0x7f8c8d }, // 高牆
+      { x: 440, y: 200, w: 40, h: 200, color: 0x7f8c8d }, // 高牆
+      { x: 590, y: 320, w: 40, h: 80, color: 0x7f8c8d } // 矮牆
     ]
   },
   9: { // 連3跳
     playerStart: { x: 100, y: 350 },
-    goal: { x: 720, y: 20, w: 40, h: 50 },
+    goal: { x: 720, y: 30, w: 40, h: 40 },
     customObjects: [
-      { x: 620, y: 360, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處右
+      { x: 620, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
       { x: 250, y: 240, w: 300, h: 30, color: 0x7f8c8d },  // 下地板
-      { x: 140, y: 200, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處左
+      { x: 140, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
       { x: 250, y: 80, w: 300, h: 30, color: 0x7f8c8d },  // 上地板
     ]
   },
   10: { // 神奇的時機
     playerStart: { x: 100, y: 350 },
-    goal: { x: 700, y: 350, w: 40, h: 50 },
+    goal: { x: 700, y: 360, w: 40, h: 40 },
     customObjects: [
-      { x: 60, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
-      { x: 200, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
-      { x: 340, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
-      { x: 480, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
-      { x: 620, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
-      { x: 160, y: 300, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處1
-      { x: 240, y: 300, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處2(假)
-      { x: 440, y: 300, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處3
-      { x: 520, y: 300, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處4(假)
+      { x: 60, y: 200, w: 40, h: 200, color: 0x7f8c8d }, // 高牆
+      { x: 200, y: 200, w: 40, h: 200, color: 0x7f8c8d }, // 高牆
+      { x: 340, y: 200, w: 40, h: 200, color: 0x7f8c8d }, // 高牆
+      { x: 480, y: 200, w: 40, h: 200, color: 0x7f8c8d }, // 高牆
+      { x: 620, y: 200, w: 40, h: 200, color: 0x7f8c8d }, // 高牆
+      { x: 160, y: 300, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處1
+      { x: 240, y: 300, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處2(假)
+      { x: 440, y: 300, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處3
+      { x: 520, y: 300, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處4(假)
     ]
   },
 };
@@ -181,7 +181,7 @@ function setupGame(levelNumber) {
   // 讀取當前關卡配置，若無則使用預設配置
   const config = LEVEL_CONFIGS[levelNumber] || {
     playerStart: { x: 100, y: 350 },
-    goal: { x: 700, y: 350, w: 40, h: 50 },
+    goal: { x: 700, y: 360, w: 40, h: 40 },
     customObjects: []
   };
 
