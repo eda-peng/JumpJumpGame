@@ -1,5 +1,5 @@
 // menu.js
-let menuContainer, levelSelectContainer, settingsContainer;
+let menuContainer, levelSelectContainer, settingsContainer, levelClearContainer;
 
 function initMenu() {
     // 1. 主選單
@@ -50,6 +50,38 @@ function initMenu() {
     settingsContainer.addChild(setLabel);
     settingsContainer.addChild(createMenuButton("返回", 400, 300, () => showScreen("MENU")));
 
+    // 4. 過關畫面
+    levelClearContainer = new PIXI.Container();
+    app.stage.addChild(levelClearContainer);
+    levelClearContainer.visible = false;
+
+    // 1. 半透明背景遮罩
+    const overlay = new PIXI.Graphics().rect(0, 0, 800, 450).fill(0x000000, 0.6);
+    overlay.eventMode = 'static'; 
+    levelClearContainer.addChild(overlay);
+
+    // 2. 中央視窗背景
+    const modalBase = new PIXI.Graphics()
+        .roundRect(200, 80, 400, 300, 20)
+        .fill(0x2c3e50)
+        .stroke({ width: 4, color: 0xf1c40f });
+    levelClearContainer.addChild(modalBase);
+
+    const clearTitle = new PIXI.Text({ text: "恭喜過關！", style: { fill: 0xf1c40f, fontSize: 48, fontWeight: 'bold' } });
+    clearTitle.anchor.set(0.5);
+    clearTitle.position.set(400, 150);
+    levelClearContainer.addChild(clearTitle);
+
+    levelClearContainer.addChild(createMenuButton("下一關", 400, 250, () => {
+        if (currentLevel < 25) {
+            setupGame(currentLevel + 1);
+        } else {
+            alert("你已經破完所有關卡了！");
+            showScreen("MENU");
+        }
+    }));
+    levelClearContainer.addChild(createMenuButton("返回關卡選擇", 400, 320, () => showScreen("LEVEL_SELECT"), 220));
+
     showScreen("MENU");
 }
 
@@ -57,9 +89,11 @@ function showScreen(screen) {
     menuContainer.visible = (screen === "MENU");
     levelSelectContainer.visible = (screen === "LEVEL_SELECT");
     settingsContainer.visible = (screen === "SETTINGS");
-    
+    levelClearContainer.visible = (screen === "LEVEL_CLEAR");
+
     if (window.gameContainer) {
-        window.gameContainer.visible = (screen === "GAME");
+        // 當過關時，背景依然顯示遊戲內容
+        window.gameContainer.visible = (screen === "GAME" || screen === "LEVEL_CLEAR");
     }
 }
 

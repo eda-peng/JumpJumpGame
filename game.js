@@ -13,7 +13,22 @@ async function init() {
   });
   document.body.appendChild(app.canvas);
 
-  // 初始化遊戲容器
+  // ---- 將遊戲畫面設為置中視窗樣式 ----
+  const canvasStyle = app.canvas.style;
+  canvasStyle.position = 'absolute';
+  canvasStyle.top = '50%';
+  canvasStyle.left = '50%';
+  canvasStyle.transform = 'translate(-50%, -50%)';
+  canvasStyle.border = '5px solid #34495e';
+  canvasStyle.borderRadius = '15px';
+  canvasStyle.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
+
+  document.body.style.backgroundColor = '#1a252f';
+  document.body.style.margin = '0';
+  document.body.style.overflow = 'hidden';
+  document.body.style.height = '100vh'; // 確保背景填滿
+
+  // 初始化遊戲容器 (修正：必須先 new 一個 Container)
   window.gameContainer = new PIXI.Container();
   app.stage.addChild(window.gameContainer);
   window.gameContainer.visible = false;
@@ -40,6 +55,121 @@ let playerVelocityX = 3;
 let playerVelocityY = 0;
 let isGrounded = false;
 
+// ---- 關卡資料定義 ----
+const LEVEL_CONFIGS = {
+  1: { // 教學關 牆壁
+    playerStart: { x: 40, y: 350 },
+    goal: { x: 700, y: 350, w: 40, h: 50 },
+    customObjects: [
+      { x: 250, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 510, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+    ]
+  },
+  2: { // 教學關 平台
+    playerStart: { x: 40, y: 350 },
+    goal: { x: 700, y: 50, w: 40, h: 50 },
+    customObjects: [
+      { x: 300, y: 300, w: 150, h: 30, color: 0x7f8c8d },
+      { x: 450, y: 200, w: 150, h: 30, color: 0x7f8c8d },
+      { x: 600, y: 100, w: 150, h: 30, color: 0x7f8c8d }
+    ]
+  },
+  3: { // 撞牆後回跳
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 80, y: 170, w: 40, h: 50 },
+    customObjects: [
+      { x: 380, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 40, y: 220, w: 250, h: 30, color: 0x7f8c8d }  // 地板
+    ]
+  },
+  4: { // 抓時機跳
+    playerStart: { x: 40, y: 350 },
+    goal: { x: 700, y: 350, w: 40, h: 50 },
+    customObjects: [
+      { x: 120, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 250, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 380, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 510, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 630, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+    ]
+  },
+  5: { // 剛好踩蹬腳處往上爬
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 720, y: 20, w: 40, h: 50 },
+    customObjects: [
+      { x: 720, y: 360, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處右
+      { x: 40, y: 200, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處左
+      { x: 40, y: 240, w: 720, h: 30, color: 0x7f8c8d },  // 地板
+      { x: 40, y: 80, w: 720, h: 30, color: 0x7f8c8d }  // 地板
+    ]
+  },
+  6: { // 不能跳
+    playerStart: { x: 100, y: 0 },
+    goal: { x: 720, y: 350, w: 40, h: 50 },
+    customObjects: [
+      { x: 90, y: 40, w: 670, h: 30, color: 0x7f8c8d },  // 地板
+      { x: 40, y: 80, w: 670, h: 30, color: 0x7f8c8d },  // 地板
+      { x: 90, y: 120, w: 670, h: 30, color: 0x7f8c8d },  // 地板
+      { x: 40, y: 160, w: 670, h: 30, color: 0x7f8c8d },  // 地板
+      { x: 90, y: 200, w: 670, h: 30, color: 0x7f8c8d },  // 地板
+      { x: 40, y: 240, w: 670, h: 30, color: 0x7f8c8d },  // 地板
+      { x: 90, y: 280, w: 670, h: 30, color: 0x7f8c8d },  // 地板
+      { x: 40, y: 320, w: 670, h: 30, color: 0x7f8c8d }  // 地板
+    ]
+  },
+  7: { // 跳躍撞牆連跳往上爬
+    playerStart: { x: 40, y: 350 },
+    goal: { x: 180, y: 0, w: 40, h: 40 },
+    customObjects: [
+      { x: 150, y: 280, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
+      { x: 350, y: 280, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
+      { x: 550, y: 280, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
+      { x: 50, y: 160, w: 100, h: 40, color: 0x95a5a6 }, // 中間層
+      { x: 250, y: 160, w: 100, h: 40, color: 0x95a5a6 }, // 中間層
+      { x: 450, y: 160, w: 100, h: 40, color: 0x95a5a6 }, // 中間層
+      { x: 650, y: 160, w: 100, h: 40, color: 0x95a5a6 }, // 中間層
+      { x: 150, y: 40, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
+      { x: 350, y: 40, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
+      { x: 550, y: 40, w: 100, h: 40, color: 0x95a5a6 }, // 最下層
+    ]
+  },
+  8: { // 不能掉到洞裡
+    playerStart: { x: 40, y: 350 },
+    goal: { x: 700, y: 350, w: 40, h: 50 },
+    customObjects: [
+      { x: 140, y: 320, w: 40, h: 80, color: 0x95a5a6 }, // 矮牆
+      { x: 290, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
+      { x: 440, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
+      { x: 590, y: 320, w: 40, h: 80, color: 0x95a5a6 } // 矮牆
+    ]
+  },
+  9: { // 連3跳
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 720, y: 20, w: 40, h: 50 },
+    customObjects: [
+      { x: 620, y: 360, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處右
+      { x: 250, y: 240, w: 300, h: 30, color: 0x7f8c8d },  // 下地板
+      { x: 140, y: 200, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處左
+      { x: 250, y: 80, w: 300, h: 30, color: 0x7f8c8d },  // 上地板
+    ]
+  },
+  10: { // 神奇的時機
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 700, y: 350, w: 40, h: 50 },
+    customObjects: [
+      { x: 60, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
+      { x: 200, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
+      { x: 340, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
+      { x: 480, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
+      { x: 620, y: 200, w: 40, h: 200, color: 0x95a5a6 }, // 高牆
+      { x: 160, y: 300, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處1
+      { x: 240, y: 300, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處2(假)
+      { x: 440, y: 300, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處3
+      { x: 520, y: 300, w: 40, h: 40, color: 0x95a5a6 }, // 蹬腳處4(假)
+    ]
+  },
+};
+
 function setupGame(levelNumber) {
   currentLevel = levelNumber;
   gameState = "PLAYING";
@@ -47,44 +177,40 @@ function setupGame(levelNumber) {
   // 清除舊物體
   window.gameContainer.removeChildren();
   walls = [];
+  
+  // 讀取當前關卡配置，若無則使用預設配置
+  const config = LEVEL_CONFIGS[levelNumber] || {
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 700, y: 350, w: 40, h: 50 },
+    customObjects: []
+  };
 
-  // ---- 建立地板 ----
-  const floor = new PIXI.Graphics()
-    .rect(0, 400, 800, 50)
-    .fill(0x7f8c8d);
-  window.gameContainer.addChild(floor);
-  walls.push(floor);
+  // ---- 共通邊界 (地板與左右牆) ----
+  const floor = new PIXI.Graphics().rect(0, 400, 800, 50).fill(0x7f8c8d);
+  const leftWall = new PIXI.Graphics().rect(0, 0, 40, 450).fill(0x7f8c8d);
+  const rightWall = new PIXI.Graphics().rect(760, 0, 40, 450).fill(0x7f8c8d);
+  window.gameContainer.addChild(floor, leftWall, rightWall);
+  walls.push(floor, leftWall, rightWall);
 
-  // ---- 建立左牆壁 ----
-  const leftWall = new PIXI.Graphics()
-    .rect(0, 100, 40, 300)
-    .fill(0xe74c3c);
-  window.gameContainer.addChild(leftWall);
-  walls.push(leftWall);
-
-  // ---- 建立右牆壁 ----
-  const rightWall = new PIXI.Graphics()
-    .rect(760, 100, 40, 300)
-    .fill(0xe74c3c);
-  window.gameContainer.addChild(rightWall);
-  walls.push(rightWall);
+  // ---- 建立自定義物件 (由資料驅動) ----
+  config.customObjects.forEach(obj => {
+    const graphics = new PIXI.Graphics().rect(obj.x, obj.y, obj.w, obj.h).fill(obj.color);
+    window.gameContainer.addChild(graphics);
+    walls.push(graphics);
+  });
 
   // ---- 建立終點 ----
-  goal = new PIXI.Graphics()
-    .rect(700, 350, 40, 50)
-    .fill(0xf1c40f);
+  goal = new PIXI.Graphics().rect(config.goal.x, config.goal.y, config.goal.w, config.goal.h).fill(0xf1c40f);
   window.gameContainer.addChild(goal);
 
-  // 難度調整：關卡越高速度越快
-  playerVelocityX = 3 + (levelNumber * 0.2);
+  // 速度
+  playerVelocityX = 5;
 
   // ---- 建立主角小人 ----
-  player = new PIXI.Graphics()
-    .rect(0, 0, 32, 48)
-    .fill(0x3498db);
+  player = new PIXI.Graphics().rect(0, 0, 32, 48).fill(0x3498db);
 
-  player.x = 100;
-  player.y = 200;
+  player.x = config.playerStart.x;
+  player.y = config.playerStart.y;
   window.gameContainer.addChild(player);
 
   // ---- 3. 點擊偵測 ----
@@ -103,7 +229,12 @@ function setupGame(levelNumber) {
   }
 
   // 加入一個簡單的「退出」按鈕回到選單
-  window.gameContainer.addChild(createSimpleButton("退出", 50, 30, () => showScreen('MENU')));
+  window.gameContainer.addChild(createSimpleButton("退出", 50, 30, () => {
+    gameState = "MENU"; // 停止遊戲邏輯運算
+    showScreen('MENU');
+  }));
+  // 加入「重來」按鈕在退出按鈕下方
+  window.gameContainer.addChild(createSimpleButton("重來", 50, 70, () => setupGame(currentLevel)));
 }
 
 function update(ticker) {
@@ -121,7 +252,8 @@ function update(ticker) {
     const wallBounds = wall.getBounds();
 
     if (wallBounds.width < 100) { // 這是牆壁
-      if (checkCollision(playerBounds, wallBounds)) {
+      if (checkCollision(playerBounds, wallBounds) && 
+          playerBounds.y + playerBounds.height > wallBounds.y + 10) { // 只有非站在頂端時才反彈
         playerVelocityX *= -1;
         player.x += playerVelocityX * dt;
         break;
@@ -151,12 +283,9 @@ function update(ticker) {
   // 終點
   if (checkCollision(player.getBounds(), goal.getBounds())) {
     gameState = "WIN";
-    setTimeout(() => {
-      alert(`恭喜通過第 ${currentLevel} 關！`);
-      if (typeof showScreen === 'function') {
-        showScreen('LEVEL_SELECT');
-      }
-    }, 10);
+    if (typeof showScreen === 'function') {
+      showScreen('LEVEL_CLEAR');
+    }
   }
 }
 
