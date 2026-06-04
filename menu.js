@@ -45,10 +45,17 @@ function initMenu() {
     app.stage.addChild(settingsContainer);
     settingsContainer.visible = false;
 
-    const setLabel = new PIXI.Text({ text: "設定選項 (開發中)", style: { fill: 0xffffff, fontSize: 24 } });
-    setLabel.anchor.set(0.5); setLabel.position.set(400, 200);
-    settingsContainer.addChild(setLabel);
-    settingsContainer.addChild(createMenuButton("返回", 400, 300, () => showScreen("MENU")));
+    const setLabel = new PIXI.Text({ text: "遊戲設定", style: { fill: 0xffffff, fontSize: 32, fontWeight: 'bold' } });
+    setLabel.anchor.set(0.5); setLabel.position.set(400, 150);
+    
+    // 建立自動下一關切換按鈕
+    const autoNextBtn = createMenuButton(`自動下一關: ${isAutoNextEnabled ? "開啟" : "關閉"}`, 400, 230, () => {
+        isAutoNextEnabled = !isAutoNextEnabled;
+        autoNextBtn.children[1].text = `自動下一關: ${isAutoNextEnabled ? "開啟" : "關閉"}`;
+    });
+
+    settingsContainer.addChild(setLabel, autoNextBtn);
+    settingsContainer.addChild(createMenuButton("返回", 400, 320, () => showScreen("MENU")));
 
     // 4. 過關畫面
     levelClearContainer = new PIXI.Container();

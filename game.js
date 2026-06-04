@@ -45,9 +45,11 @@ async function init() {
 // 2. 遊戲變數
 let player;
 let walls = [];
+let speedZones = []; // 儲存加速與減速區塊
 let goal;
 let gameState = "MENU";
 let currentLevel = 0;
+let isAutoNextEnabled = false; // 自動進入下一關的開關
 
 const GRAVITY = 0.6;
 const JUMP_FORCE = -12;
@@ -95,10 +97,11 @@ const LEVEL_CONFIGS = {
   },
   5: { // 剛好踩蹬腳處往上爬
     playerStart: { x: 100, y: 350 },
-    goal: { x: 720, y: 30, w: 40, h: 40 },
+    goal: { x: 720, y: 0, w: 40, h: 40 },
     customObjects: [
       { x: 720, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
       { x: 40, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
+      { x: 720, y: 40, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
       { x: 40, y: 240, w: 720, h: 30, color: 0x7f8c8d },  // 地板
       { x: 40, y: 80, w: 720, h: 30, color: 0x7f8c8d }  // 地板
     ]
@@ -143,17 +146,7 @@ const LEVEL_CONFIGS = {
       { x: 590, y: 320, w: 40, h: 80, color: 0x7f8c8d } // 矮牆
     ]
   },
-  9: { // 連3跳
-    playerStart: { x: 100, y: 350 },
-    goal: { x: 720, y: 30, w: 40, h: 40 },
-    customObjects: [
-      { x: 620, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
-      { x: 250, y: 240, w: 300, h: 30, color: 0x7f8c8d },  // 下地板
-      { x: 140, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
-      { x: 250, y: 80, w: 300, h: 30, color: 0x7f8c8d },  // 上地板
-    ]
-  },
-  10: { // 神奇的時機
+  9: { // 神奇的時機
     playerStart: { x: 100, y: 350 },
     goal: { x: 700, y: 360, w: 40, h: 40 },
     customObjects: [
@@ -168,6 +161,59 @@ const LEVEL_CONFIGS = {
       { x: 520, y: 300, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處4(假)
     ]
   },
+  10: { // 連3跳
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 620, y: 30, w: 40, h: 40 },
+    customObjects: [
+      { x: 620, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
+      { x: 250, y: 240, w: 300, h: 30, color: 0x7f8c8d },  // 下地板
+      { x: 140, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
+      { x: 250, y: 80, w: 300, h: 30, color: 0x7f8c8d },  // 上地板
+    ]
+  },
+  11: { // 加速教學關卡
+    playerStart: { x: 50, y: 350 },
+    goal: { x: 720, y: 180, w: 40, h: 40 },
+    customObjects: [
+      { x: 300, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 蹬腳處
+      { x: 540, y: 220, w: 220, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 340, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 720, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+    ]
+  },
+  12: { // 減速教學關卡
+    playerStart: { x: 50, y: 350 },
+    goal: { x: 720, y: 180, w: 40, h: 40 },
+    customObjects: [
+      { x: 300, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 蹬腳處
+      { x: 540, y: 220, w: 220, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 340, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 720, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 530, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+    ]
+  },
+  13: { // 減速連3跳
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 640, y: 30, w: 40, h: 40 },
+    customObjects: [
+      { x: 640, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
+      { x: 190, y: 240, w: 420, h: 30, color: 0x7f8c8d },  // 下地板
+      { x: 120, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
+      { x: 190, y: 80, w: 420, h: 30, color: 0x7f8c8d },  // 上地板
+      { x: 40, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+    ]
+  },
+  16: { // 減速連3跳
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 720, y: 30, w: 40, h: 40 },
+    customObjects: [
+      { x: 640, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
+      { x: 220, y: 240, w: 360, h: 30, color: 0x7f8c8d },  // 下地板
+      { x: 120, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
+      { x: 220, y: 80, w: 360, h: 30, color: 0x7f8c8d },  // 上地板
+      { x: 40, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+    ]
+  },
 };
 
 function setupGame(levelNumber) {
@@ -177,6 +223,7 @@ function setupGame(levelNumber) {
   // 清除舊物體
   window.gameContainer.removeChildren();
   walls = [];
+  speedZones = [];
   
   // 讀取當前關卡配置，若無則使用預設配置
   const config = LEVEL_CONFIGS[levelNumber] || {
@@ -195,8 +242,15 @@ function setupGame(levelNumber) {
   // ---- 建立自定義物件 (由資料驅動) ----
   config.customObjects.forEach(obj => {
     const graphics = new PIXI.Graphics().rect(obj.x, obj.y, obj.w, obj.h).fill(obj.color);
+    graphics.objectType = obj.type || 'wall'; // 標記類型
+    graphics._isTouched = false; // 用於確保一次接觸只觸發一次效果
     window.gameContainer.addChild(graphics);
-    walls.push(graphics);
+    
+    if (obj.type === 'speedup' || obj.type === 'speeddown') {
+      speedZones.push(graphics);
+    } else {
+      walls.push(graphics);
+    }
   });
 
   // ---- 建立終點 ----
@@ -280,11 +334,37 @@ function update(ticker) {
     }
   }
 
+  // 速度區塊偵測 (加速/減速)
+  for (let zone of speedZones) {
+    const playerBounds = player.getBounds();
+    const zoneBounds = zone.getBounds();
+
+    if (checkCollision(playerBounds, zoneBounds)) {
+      if (!zone._isTouched) { // 只有在剛進入區塊時觸發
+        let currentSpeed = Math.abs(playerVelocityX);
+        if (zone.objectType === 'speedup') {
+          currentSpeed = Math.min(10, currentSpeed + 0.5);
+        } else if (zone.objectType === 'speeddown') {
+          currentSpeed = Math.max(2, currentSpeed - 0.5);
+        }
+        playerVelocityX = (playerVelocityX >= 0 ? 1 : -1) * currentSpeed;
+        zone._isTouched = true;
+      }
+    } else {
+      zone._isTouched = false; // 離開區塊後重設，下次進入可再次觸發
+    }
+  }
+
   // 終點
   if (checkCollision(player.getBounds(), goal.getBounds())) {
     gameState = "WIN";
-    if (typeof showScreen === 'function') {
-      showScreen('LEVEL_CLEAR');
+    if (isAutoNextEnabled && currentLevel < 25) {
+      // 如果開啟自動下一關，等待 0.5 秒後自動載入下一關
+      setTimeout(() => setupGame(currentLevel + 1), 500);
+    } else {
+      if (typeof showScreen === 'function') {
+        showScreen('LEVEL_CLEAR');
+      }
     }
   }
 }
