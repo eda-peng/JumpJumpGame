@@ -171,7 +171,7 @@ const LEVEL_CONFIGS = {
       { x: 250, y: 80, w: 300, h: 30, color: 0x7f8c8d },  // 上地板
     ]
   },
-  11: { // 加速教學關卡
+  16: { // 加速教學關卡
     playerStart: { x: 50, y: 350 },
     goal: { x: 720, y: 180, w: 40, h: 40 },
     customObjects: [
@@ -181,7 +181,7 @@ const LEVEL_CONFIGS = {
       { x: 720, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
     ]
   },
-  12: { // 減速教學關卡
+  17: { // 減速教學關卡
     playerStart: { x: 100, y: 350 },
     goal: { x: 640, y: 30, w: 40, h: 40 },
     customObjects: [
@@ -193,7 +193,7 @@ const LEVEL_CONFIGS = {
       { x: 600, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
     ]
   },
-  13: { // 加速教學關卡 進階
+  18: { // 加速教學關卡 進階
     playerStart: { x: 50, y: 350 },
     goal: { x: 720, y: 180, w: 40, h: 40 },
     customObjects: [
@@ -204,7 +204,7 @@ const LEVEL_CONFIGS = {
       { x: 530, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
     ]
   },
-  14: { // 減速教學關卡 進階
+  19: { // 減速教學關卡 進階
     playerStart: { x: 100, y: 350 },
     goal: { x: 640, y: 30, w: 40, h: 40 },
     customObjects: [
@@ -217,7 +217,51 @@ const LEVEL_CONFIGS = {
       { x: 600, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
     ]
   },
-  15: { // 減速後加速
+  20: { // 減速後節奏跳躍
+    playerStart: { x: 40, y: 350 },
+    goal: { x: 720, y: 40, w: 40, h: 40 },
+    customObjects: [
+      { x: 150, y: 300, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 300, y: 240, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 450, y: 180, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 600, y: 120, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 720, y: 80, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 340, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 420, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+    ]
+  },
+  21: { // 上方分路
+    playerStart: { x: 40, y: 350 },
+    goal: { x: 250, y: 150, w: 40, h: 40 },
+    customObjects: [
+      { x: 290, y: 100, w: 40, h: 240, color: 0x7f8c8d }, // 左窄牆
+      { x: 470, y: 100, w: 40, h: 240, color: 0x7f8c8d }, // 右窄牆
+      { x: 90, y: 100, w: 620, h: 40, color: 0x7f8c8d }, // 中央地板1
+      { x: 90, y: 200, w: 620, h: 40, color: 0x7f8c8d }, // 中央地板2
+      { x: 330, y: 300, w: 140, h: 40, color: 0x7f8c8d }, // 中央地板3
+      { x: 40, y: 150, w: 200, h: 40, color: 0x7f8c8d }, // 左側地板1
+      { x: 40, y: 250, w: 200, h: 40, color: 0x7f8c8d }, // 左側地板2
+      { x: 560, y: 150, w: 200, h: 40, color: 0x7f8c8d }, // 右側地板1
+      { x: 560, y: 250, w: 200, h: 40, color: 0x7f8c8d }, // 右側地板2
+      { x: 395, y: 0, w: 10, h: 100, color: 0x7f8c8d }, // 中央大牆
+      { x: 380, y: 260, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 380, y: 160, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+    ]
+  },
+  22: { // 加速 跳躍
+    playerStart: { x: 40, y: 350 },
+    goal: { x: 720, y: 40, w: 40, h: 40 },
+    customObjects: [
+      { x: 150, y: 300, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 300, y: 240, w: 60, h: 40, color: 0x7f8c8d },
+      // { x: 450, y: 180, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 600, y: 120, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 720, y: 80, w: 60, h: 40, color: 0x7f8c8d },
+      { x: 340, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 420, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+    ]
+  },
+  23: { // 減速後加速
     playerStart: { x: 100, y: 350 },
     goal: { x: 640, y: 30, w: 40, h: 40 },
     customObjects: [
@@ -237,19 +281,8 @@ const LEVEL_CONFIGS = {
       { x: 210, y: 200, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
     ]
   },
-  16: { // 減速連3跳
-    playerStart: { x: 100, y: 350 },
-    goal: { x: 720, y: 30, w: 40, h: 40 },
-    customObjects: [
-      { x: 640, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
-      { x: 220, y: 240, w: 360, h: 30, color: 0x7f8c8d },  // 下地板
-      { x: 120, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
-      { x: 220, y: 80, w: 360, h: 30, color: 0x7f8c8d },  // 上地板
-      { x: 40, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
-    ]
-  },
-  16: { // 不能掉到洞裡
-    playerStart: { x: 640, y: 350 },
+  24: { // 速度減慢繞一圈
+    playerStart: { x: 40, y: 350 },
     goal: { x: 180, y: 140, w: 40, h: 40 },
     customObjects: [
       { x: 140, y: 100, w: 40, h: 240, color: 0x7f8c8d }, // 高牆
@@ -261,9 +294,26 @@ const LEVEL_CONFIGS = {
       { x: 90, y: 200, w: 50, h: 40, color: 0x7f8c8d }, // 地板
       { x: 40, y: 300, w: 50, h: 40, color: 0x7f8c8d }, // 地板
       { x: 480, y: 240, w: 50, h: 40, color: 0x7f8c8d }, // 地板
-      { x: 580, y: 300, w: 50, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 570, y: 300, w: 50, h: 40, color: 0x7f8c8d }, // 地板
       { x: 40, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
       { x: 400, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+    ]
+  },
+  25: { // 加速後只小量減速
+    playerStart: { x: 80, y: 350 },
+    goal: { x: 40, y: 110, w: 40, h: 40 },
+    customObjects: [
+      { x: 120, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 180, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 240, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 40, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆左
+      { x: 350, y: 250, w: 40, h: 150, color: 0x7f8c8d }, // 中央大牆
+      { x: 390, y: 320, w: 40, h: 80, color: 0x7f8c8d }, // 矮牆中
+      { x: 40, y: 150, w: 150, h: 40, color: 0x7f8c8d },  // 左地板
+      { x: 500, y: 240, w: 150, h: 40, color: 0x7f8c8d },  // 右地板
+      { x: 520, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 580, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 640, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
     ]
   },
 };
@@ -368,8 +418,15 @@ function update(ticker) {
     if (wallBounds.width < 50) { // 這是牆壁
       if (checkCollision(playerBounds, wallBounds) && 
           playerBounds.y + playerBounds.height > wallBounds.y + 10) { // 只有非站在頂端時才反彈
+        
+        // 修正：不僅反轉速度，還需將小人移出牆壁碰撞盒，防止因座標重疊導致的重複反彈（卡住）
+        if (playerVelocityX > 0) {
+          player.x = wallBounds.x - playerBounds.width;
+        } else {
+          player.x = wallBounds.x + wallBounds.width;
+        }
+        
         playerVelocityX *= -1;
-        player.x += playerVelocityX * dt;
         break;
       }
     }
@@ -386,7 +443,8 @@ function update(ticker) {
     const wallBounds = wall.getBounds();
 
     if (checkCollision(playerBounds, wallBounds)) {
-      if (playerVelocityY > 0 && playerBounds.y + playerBounds.height - playerVelocityY <= wallBounds.y + 10) {
+      // 只要是向下掉落，且腳底接近平台頂端（容許誤差增加到 15），就判定著地
+      if (playerVelocityY >= 0 && playerBounds.y + playerBounds.height - (playerVelocityY + 1) <= wallBounds.y + 10) {
         player.y = wallBounds.y - playerBounds.height;
         playerVelocityY = 0;
         isGrounded = true;
