@@ -182,6 +182,18 @@ const LEVEL_CONFIGS = {
     ]
   },
   12: { // 減速教學關卡
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 640, y: 30, w: 40, h: 40 },
+    customObjects: [
+      { x: 640, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
+      { x: 190, y: 240, w: 420, h: 30, color: 0x7f8c8d },  // 下地板
+      { x: 120, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
+      { x: 190, y: 80, w: 420, h: 30, color: 0x7f8c8d },  // 上地板
+      { x: 40, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 600, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+    ]
+  },
+  13: { // 加速教學關卡 進階
     playerStart: { x: 50, y: 350 },
     goal: { x: 720, y: 180, w: 40, h: 40 },
     customObjects: [
@@ -192,7 +204,7 @@ const LEVEL_CONFIGS = {
       { x: 530, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
     ]
   },
-  13: { // 減速連3跳
+  14: { // 減速教學關卡 進階
     playerStart: { x: 100, y: 350 },
     goal: { x: 640, y: 30, w: 40, h: 40 },
     customObjects: [
@@ -201,6 +213,28 @@ const LEVEL_CONFIGS = {
       { x: 120, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
       { x: 190, y: 80, w: 420, h: 30, color: 0x7f8c8d },  // 上地板
       { x: 40, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 320, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 600, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+    ]
+  },
+  15: { // 減速後加速
+    playerStart: { x: 100, y: 350 },
+    goal: { x: 640, y: 30, w: 40, h: 40 },
+    customObjects: [
+      { x: 640, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
+      { x: 190, y: 240, w: 420, h: 30, color: 0x7f8c8d },  // 下地板
+      { x: 120, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
+      { x: 190, y: 80, w: 420, h: 30, color: 0x7f8c8d },  // 上地板
+      { x: 40, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 320, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 600, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+      { x: 570, y: 200, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 510, y: 200, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 450, y: 200, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 390, y: 200, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 330, y: 200, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 270, y: 200, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 210, y: 200, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
     ]
   },
   16: { // 減速連3跳
@@ -212,6 +246,24 @@ const LEVEL_CONFIGS = {
       { x: 120, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
       { x: 220, y: 80, w: 360, h: 30, color: 0x7f8c8d },  // 上地板
       { x: 40, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
+    ]
+  },
+  16: { // 不能掉到洞裡
+    playerStart: { x: 640, y: 350 },
+    goal: { x: 180, y: 140, w: 40, h: 40 },
+    customObjects: [
+      { x: 140, y: 100, w: 40, h: 240, color: 0x7f8c8d }, // 高牆
+      { x: 290, y: 240, w: 40, h: 100, color: 0x7f8c8d }, // 高牆
+      { x: 440, y: 240, w: 40, h: 160, color: 0x7f8c8d }, // 高牆
+      { x: 620, y: 100, w: 40, h: 240, color: 0x7f8c8d }, // 高牆
+      { x: 140, y: 100, w: 480, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 40, y: 100, w: 50, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 90, y: 200, w: 50, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 40, y: 300, w: 50, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 480, y: 240, w: 50, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 580, y: 300, w: 50, h: 40, color: 0x7f8c8d }, // 地板
+      { x: 40, y: 360, w: 40, h: 40, color: 0x27ae60, type: 'speedup' },
+      { x: 400, y: 360, w: 40, h: 40, color: 0xc0392b, type: 'speeddown' },
     ]
   },
 };
@@ -289,6 +341,14 @@ function setupGame(levelNumber) {
   }));
   // 加入「重來」按鈕在退出按鈕下方
   window.gameContainer.addChild(createSimpleButton("重來", 50, 70, () => setupGame(currentLevel)));
+
+  // 顯示當前關卡文字 (放置於左下角地板區域)
+  const levelText = new PIXI.Text({
+    text: `第 ${levelNumber} 關`,
+    style: { fill: 0xffffff, fontSize: 18, fontWeight: 'bold' }
+  });
+  levelText.position.set(20, 415);
+  window.gameContainer.addChild(levelText);
 }
 
 function update(ticker) {
@@ -305,7 +365,7 @@ function update(ticker) {
     const playerBounds = player.getBounds();
     const wallBounds = wall.getBounds();
 
-    if (wallBounds.width < 100) { // 這是牆壁
+    if (wallBounds.width < 50) { // 這是牆壁
       if (checkCollision(playerBounds, wallBounds) && 
           playerBounds.y + playerBounds.height > wallBounds.y + 10) { // 只有非站在頂端時才反彈
         playerVelocityX *= -1;
