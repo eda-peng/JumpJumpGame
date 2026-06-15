@@ -15,12 +15,11 @@ async function init() {
 
   // ---- 將遊戲畫面設為置中視窗樣式 ----
   const canvasStyle = app.canvas.style;
-  canvasStyle.position = 'absolute';
-  canvasStyle.top = '50%';
-  canvasStyle.left = '50%';
-  canvasStyle.transform = 'translate(-50%, -50%)';
+  canvasStyle.width = '100vw';
+  canvasStyle.height = '100vh';
+  canvasStyle.objectFit = 'contain'; // 關鍵：維持比例縮放並置中，不被切掉
   canvasStyle.border = '5px solid #34495e';
-  canvasStyle.borderRadius = '15px';
+  canvasStyle.boxSizing = 'border-box'; // 確保邊框不會撐大畫布
   canvasStyle.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
 
   document.body.style.backgroundColor = '#1a252f';
