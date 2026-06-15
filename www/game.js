@@ -174,6 +174,7 @@ const LEVEL_CONFIGS = {
     customObjects: [
       { x: 620, y: 200, w: 140, h: 40, color: 0x7f8c8d }, // 蹬腳處右上
       { x: 620, y: 360, w: 140, h: 40, color: 0x7f8c8d }, // 蹬腳處右下
+      { x: 620, y: 360, w: 40, h: 80, color: 0x7f8c8d }, // 牆壁，貼在地面的地板會可以走進去
       { x: 250, y: 240, w: 100, h: 40, color: 0x7f8c8d },  // 下地板
       { x: 450, y: 240, w: 100, h: 40, color: 0x7f8c8d },  // 下地板
       { x: 250, y: 80, w: 100, h: 40, color: 0x7f8c8d },  // 上地板
