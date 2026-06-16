@@ -15,9 +15,10 @@ async function init() {
 
   // ---- 將遊戲畫面設為置中視窗樣式 ----
   const canvasStyle = app.canvas.style;
-  canvasStyle.width = '100vw';
-  canvasStyle.height = '100vh';
-  canvasStyle.objectFit = 'contain'; // 關鍵：維持比例縮放並置中，不被切掉
+  canvasStyle.maxWidth = '100vw';
+  canvasStyle.maxHeight = '100vh';
+  canvasStyle.width = 'auto';
+  canvasStyle.height = 'auto';
   canvasStyle.border = '5px solid #34495e';
   canvasStyle.boxSizing = 'border-box'; // 確保邊框不會撐大畫布
   canvasStyle.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
@@ -116,7 +117,7 @@ function setupGame(levelNumber) {
       isGrounded = false;
     }
   });
-  
+
   // 顯示遊戲畫面，隱藏選單
   if (typeof showScreen === 'function') {
     showScreen('GAME');
@@ -173,6 +174,12 @@ function update(ticker) {
   // 重力
   playerVelocityY += GRAVITY * dt;
   player.y += playerVelocityY * dt;
+
+  // 檢查是否跳出畫面左右兩側 (自動重來)
+  if (player.x + player.width < 0 || player.x > 800) {
+    setupGame(currentLevel);
+    return;
+  }
 
   // 地板偵測
   isGrounded = false;
