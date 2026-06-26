@@ -221,9 +221,22 @@ function update(ticker) {
   // 終點
   if (checkCollision(player.getBounds(), goal.getBounds())) {
     gameState = "WIN";
+    
+    // 標記當前關卡為已完成，並解鎖下一關
+    if (window.progressManager) {
+      window.progressManager.completeLevel(currentLevel);
+    }
+    
     if (isAutoNextEnabled && currentLevel < 25) {
-      // 如果開啟自動下一關，等待 0.5 秒後自動載入下一關
-      setTimeout(() => setupGame(currentLevel + 1), 500);
+      // 檢查下一關是否已解鎖，若已解鎖則自動進入
+      const nextLevelUnlocked = window.progressManager && window.progressManager.isLevelUnlocked(currentLevel + 1);
+      if (nextLevelUnlocked) {
+        setTimeout(() => setupGame(currentLevel + 1), 500);
+      } else {
+        if (typeof showScreen === 'function') {
+          showScreen('LEVEL_CLEAR');
+        }
+      }
     } else {
       if (typeof showScreen === 'function') {
         showScreen('LEVEL_CLEAR');
