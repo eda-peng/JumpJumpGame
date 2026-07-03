@@ -69,11 +69,12 @@ function initMenu() {
     clearTitle.position.set(400, 150);
     levelClearContainer.addChild(clearTitle);
 
+    // 初始化 - 總是創建兩個按鈕，動態調整交由 showScreen() 處理
     levelClearContainer.addChild(createMenuButton("下一關", 400, 250, () => {
         if (currentLevel < 25) {
             setupGame(currentLevel + 1);
         } else {
-            alert("你已經破完所有關卡了！");
+            alert("恭喜破關！\n 歡迎嘗試挑戰關卡及計時模式！");
             showScreen("MENU");
         }
     }));
@@ -91,6 +92,21 @@ function showScreen(screen) {
     // 當顯示關卡選擇時，重新渲染按鈕以反映最新進度
     if (screen === "LEVEL_SELECT") {
         updateLevelButtons();
+    }
+
+    // 當顯示過關畫面時，動態調整按鈕顯示
+    if (screen === "LEVEL_CLEAR") {
+        // 獲取"下一關"按鈕和"返回關卡選擇"按鈕
+        const buttons = levelClearContainer.children.slice(2); // 跳過背景和標題
+        for (let btn of buttons) {
+            const btnText = btn.children[1]?.text;
+            if (btnText === "下一關") {
+                btn.visible = (currentLevel !== 'CHALLENGE' && currentLevel !== 'TIMING');
+            }
+            if (btnText === "返回關卡選擇") {
+                btn.position.y = (currentLevel === 'CHALLENGE' || currentLevel === 'TIMING') ? 280 : 320;
+            }
+        }
     }
 
     if (window.gameContainer) {
@@ -144,6 +160,21 @@ function updateLevelButtons() {
             }
         }, isUnlocked, isCompleted);
         buttonsGroup.addChild(btn);
+    }
+    
+    // 只有在完成25關時才顯示特殊模式按鈕
+    if (window.progressManager.isLevelCompleted(25)) {
+        // 新增"挑戰"按鈕（在第21關下方）
+        const challengeBtn = createSpecialModeButton("挑戰", 180, 400, () => {
+            setupGame('CHALLENGE');
+        }, true);
+        buttonsGroup.addChild(challengeBtn);
+
+        // 新增"計時模式"按鈕（在第25關下方）
+        const timingModeBtn = createSpecialModeButton("計時模式", 620, 400, () => {
+            // 待實現功能
+        }, true);
+        buttonsGroup.addChild(timingModeBtn);
     }
     
     buttonsGroup.addChild(createMenuButton("返回主選單", 400, 415, () => showScreen("MENU"), 160));
@@ -212,6 +243,44 @@ function createLevelButton(num, x, y, callback, isUnlocked = true, isCompleted =
             e.stopPropagation();
             // 被點擊時提示已在 levelSelectContainer 中處理
         });
+    }
+
+    return btn;
+}
+
+function createSpecialModeButton(label, x, y, callback, isUnlocked = false) {
+    const btn = new PIXI.Container();
+    
+    // 根據解鎖狀態決定顏色
+    let bgColor = isUnlocked ? 0x9b59b6 : 0x7f8c8d;  // 紫色=已解鎖，灰色=鎖定
+    
+    const bg = new PIXI.Graphics().roundRect(-50, -22, 100, 44, 8).fill(bgColor);
+    
+    const txt = new PIXI.Text({ text: label, style: { fill: 0xffffff, fontSize: 16, fontWeight: 'bold' } });
+    txt.anchor.set(0.5);
+    btn.addChild(bg, txt);
+    btn.position.set(x, y);
+    
+    if (isUnlocked) {
+        // 已解鎖：可點擊
+        btn.eventMode = 'static';
+        btn.cursor = 'pointer';
+        btn.on('pointerdown', callback);
+        btn.on('pointerover', () => bg.tint = 0xc39bd3);
+        btn.on('pointerout', () => bg.tint = 0xffffff);
+    } else {
+        // 鎖定：不可點擊
+        btn.eventMode = 'static';
+        btn.cursor = 'not-allowed';
+        
+        // 在按鈕的右上角添加鎖頭符號
+        const lockIcon = new PIXI.Text({ 
+            text: "🔒", 
+            style: { fontSize: 14 } 
+        });
+        lockIcon.anchor.set(0.5);
+        lockIcon.position.set(45, -22);  // 右上角位置
+        btn.addChild(lockIcon);
     }
 
     return btn;

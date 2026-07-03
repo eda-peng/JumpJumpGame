@@ -42,6 +42,40 @@ async function init() {
   }
 }
 
+// 開發者快捷鍵：同時按下 C、R、E 完成所有25關
+const keysPressed = { c: false, r: false, e: false };
+
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (key === 'c') keysPressed.c = true;
+  if (key === 'r') keysPressed.r = true;
+  if (key === 'e') keysPressed.e = true;
+
+  // 檢查是否同時按下 C、R、E
+  if (keysPressed.c && keysPressed.r && keysPressed.e) {
+    if (confirm('🔓 開發者模式：確定要把所有25關設為已通關？')) {
+      // 標記所有25關為已完成
+      const progress = window.progressManager.getProgress();
+      progress.completedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
+      progress.unlockedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
+      localStorage.setItem(window.progressManager.storageKey, JSON.stringify(progress));
+      alert('✅ 所有25關已標記為通關！重新整理頁面後生效。');
+      location.reload();
+    }
+    // 重置按鍵狀態
+    keysPressed.c = false;
+    keysPressed.r = false;
+    keysPressed.e = false;
+  }
+});
+
+document.addEventListener('keyup', (event) => {
+  const key = event.key.toLowerCase();
+  if (key === 'c') keysPressed.c = false;
+  if (key === 'r') keysPressed.r = false;
+  if (key === 'e') keysPressed.e = false;
+});
+
 // 2. 遊戲變數
 let player;
 let walls = [];
@@ -132,8 +166,16 @@ function setupGame(levelNumber) {
   window.gameContainer.addChild(createSimpleButton("重來", 50, 70, () => setupGame(currentLevel)));
 
   // 顯示當前關卡文字 (放置於左下角地板區域)
+  let displayText = '';
+  if (levelNumber === 'CHALLENGE') {
+    displayText = '挑戰關卡';
+  } else if (levelNumber === 'TIMING') {
+    displayText = '計時模式';
+  } else {
+    displayText = `第 ${levelNumber} 關`;
+  }
   const levelText = new PIXI.Text({
-    text: `第 ${levelNumber} 關`,
+    text: displayText,
     style: { fill: 0xffffff, fontSize: 18, fontWeight: 'bold' }
   });
   levelText.position.set(20, 415);
@@ -222,12 +264,17 @@ function update(ticker) {
   if (checkCollision(player.getBounds(), goal.getBounds())) {
     gameState = "WIN";
     
-    // 標記當前關卡為已完成，並解鎖下一關
-    if (window.progressManager) {
+    // 只為數字型關卡標記進度
+    if (typeof currentLevel === 'number' && window.progressManager) {
       window.progressManager.completeLevel(currentLevel);
     }
     
-    if (isAutoNextEnabled && currentLevel < 25) {
+    // 如果是挑戰關或計時模式，直接回到關卡選擇
+    if (currentLevel === 'CHALLENGE' || currentLevel === 'TIMING') {
+      if (typeof showScreen === 'function') {
+        showScreen('LEVEL_CLEAR');
+      }
+    } else if (isAutoNextEnabled && currentLevel < 25) {
       // 檢查下一關是否已解鎖，若已解鎖則自動進入
       const nextLevelUnlocked = window.progressManager && window.progressManager.isLevelUnlocked(currentLevel + 1);
       if (nextLevelUnlocked) {
