@@ -42,38 +42,45 @@ async function init() {
   }
 }
 
-// 開發者快捷鍵：同時按下 C、R、E 完成所有25關
-const keysPressed = { c: false, r: false, e: false };
+// 開發者快捷鍵：順序按下 C → R → E（1秒內完成）
+  const devMode = {
+    sequence: [],
+    lastKeyTime: 0,
+    timeout: 1000, // 1秒內要完成序列
+    targetSequence: ['c', 'r', 'e']
+  };
 
-document.addEventListener('keydown', (event) => {
-  const key = event.key.toLowerCase();
-  if (key === 'c') keysPressed.c = true;
-  if (key === 'r') keysPressed.r = true;
-  if (key === 'e') keysPressed.e = true;
-
-  // 檢查是否同時按下 C、R、E
-  if (keysPressed.c && keysPressed.r && keysPressed.e) {
-    if (confirm('🔓 開發者模式：確定要把所有25關設為已通關？')) {
-      // 標記所有25關為已完成
-      const progress = window.progressManager.getProgress();
-      progress.completedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
-      progress.unlockedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
-      localStorage.setItem(window.progressManager.storageKey, JSON.stringify(progress));
-      alert('✅ 所有25關已標記為通關！重新整理頁面後生效。');
-      location.reload();
+  document.addEventListener('keydown', (event) => {
+    const key = event.key.toLowerCase();
+    const now = Date.now();
+    
+    // 如果超過指定時間沒按鍵，重置序列
+    if (now - devMode.lastKeyTime > devMode.timeout) {
+      devMode.sequence = [];
     }
-    // 重置按鍵狀態
-    keysPressed.c = false;
-    keysPressed.r = false;
-    keysPressed.e = false;
-  }
-});
-
-document.addEventListener('keyup', (event) => {
-  const key = event.key.toLowerCase();
-  if (key === 'c') keysPressed.c = false;
-  if (key === 'r') keysPressed.r = false;
-  if (key === 'e') keysPressed.e = false;
+    
+    // 檢查是否是目標序列的下一個鍵
+    if (key === devMode.targetSequence[devMode.sequence.length]) {
+      devMode.sequence.push(key);
+      devMode.lastKeyTime = now;
+      
+      // 如果完成整個序列
+      if (devMode.sequence.length === devMode.targetSequence.length) {
+        if (confirm('🔓 開發者模式：確定要把所有25關設為已通關？')) {
+          // 標記所有25關為已完成
+          const progress = window.progressManager.getProgress();
+          progress.completedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
+          progress.unlockedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
+          localStorage.setItem(window.progressManager.storageKey, JSON.stringify(progress));
+          alert('✅ 所有25關已標記為通關！重新整理頁面後生效。');
+          location.reload();
+        }
+        devMode.sequence = []; // 重置序列
+      }
+    } else {
+      // 輸入了錯誤的鍵，重置序列
+      devMode.sequence = [];
+    }
 });
 
 // 2. 遊戲變數
@@ -269,8 +276,11 @@ function update(ticker) {
       window.progressManager.completeLevel(currentLevel);
     }
     
-    // 如果是挑戰關或計時模式，直接回到關卡選擇
+    // 如果是挑戰關或計時模式，標記為已完成並回到關卡選擇
     if (currentLevel === 'CHALLENGE' || currentLevel === 'TIMING') {
+      if (window.progressManager) {
+        window.progressManager.completeSpecialMode(currentLevel);
+      }
       if (typeof showScreen === 'function') {
         showScreen('LEVEL_CLEAR');
       }

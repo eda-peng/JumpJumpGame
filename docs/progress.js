@@ -11,7 +11,11 @@ class ProgressManager {
     if (!localStorage.getItem(this.storageKey)) {
       const initialProgress = {
         unlockedLevels: [1], // 只有第一關預設解鎖
-        completedLevels: []
+        completedLevels: [],
+        specialModes: {
+          CHALLENGE: false,
+          TIMING: false
+        }
       };
       localStorage.setItem(this.storageKey, JSON.stringify(initialProgress));
     }
@@ -20,7 +24,19 @@ class ProgressManager {
   // 取得當前進度物件
   getProgress() {
     const data = localStorage.getItem(this.storageKey);
-    return data ? JSON.parse(data) : { unlockedLevels: [1], completedLevels: [] };
+    const defaultProgress = { 
+      unlockedLevels: [1], 
+      completedLevels: [],
+      specialModes: { CHALLENGE: false, TIMING: false }
+    };
+    if (!data) return defaultProgress;
+    
+    const progress = JSON.parse(data);
+    // 確保 specialModes 存在（向後兼容舊存檔）
+    if (!progress.specialModes) {
+      progress.specialModes = { CHALLENGE: false, TIMING: false };
+    }
+    return progress;
   }
 
   // 檢查某個關卡是否已解鎖
@@ -76,6 +92,22 @@ class ProgressManager {
   getProgressPercentage() {
     const progress = this.getProgress();
     return Math.round((progress.completedLevels.length / 25) * 100);
+  }
+
+  // 標記特殊模式為已完成
+  completeSpecialMode(modeName) {
+    const progress = this.getProgress();
+    if (!progress.specialModes) {
+      progress.specialModes = { CHALLENGE: false, TIMING: false };
+    }
+    progress.specialModes[modeName] = true;
+    localStorage.setItem(this.storageKey, JSON.stringify(progress));
+  }
+
+  // 檢查特殊模式是否已完成
+  isSpecialModeCompleted(modeName) {
+    const progress = this.getProgress();
+    return progress.specialModes && progress.specialModes[modeName] === true;
   }
 }
 

@@ -322,12 +322,15 @@ const LEVEL_CONFIGS = {
   },
   CHALLENGE: { // 挑戰關卡 (與13關相同)
     playerStart: { x: 100, y: 350 },
-    goal: { x: 620, y: 30, w: 40, h: 40 },
+    // goal: { x: 620, y: 30, w: 40, h: 40 },
+    goal: { x: 620, y: 330, w: 40, h: 40 },
     customObjects: [
-      { x: 620, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
-      { x: 250, y: 240, w: 300, h: 40, color: 0x7f8c8d },  // 下地板
-      { x: 140, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
-      { x: 250, y: 80, w: 300, h: 40, color: 0x7f8c8d },  // 上地板
+      // { x: 620, y: 360, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處右
+      // { x: 250, y: 240, w: 100, h: 40, color: 0x7f8c8d },  // 下地板
+      // { x: 450, y: 240, w: 100, h: 40, color: 0x7f8c8d },  // 下地板
+      // { x: 140, y: 200, w: 40, h: 40, color: 0x7f8c8d }, // 蹬腳處左
+      // { x: 250, y: 80, w: 100, h: 40, color: 0x7f8c8d },  // 上地板
+      // { x: 450, y: 80, w: 100, h: 40, color: 0x7f8c8d },  // 上地板
     ]
   },
 };

@@ -167,13 +167,13 @@ function updateLevelButtons() {
         // 新增"挑戰"按鈕（在第21關下方）
         const challengeBtn = createSpecialModeButton("挑戰", 180, 400, () => {
             setupGame('CHALLENGE');
-        }, true);
+        }, true, window.progressManager.isSpecialModeCompleted('CHALLENGE'));
         buttonsGroup.addChild(challengeBtn);
 
         // 新增"計時模式"按鈕（在第25關下方）
         const timingModeBtn = createSpecialModeButton("計時模式", 620, 400, () => {
             // 待實現功能
-        }, true);
+        }, true, false);
         buttonsGroup.addChild(timingModeBtn);
     }
     
@@ -248,7 +248,7 @@ function createLevelButton(num, x, y, callback, isUnlocked = true, isCompleted =
     return btn;
 }
 
-function createSpecialModeButton(label, x, y, callback, isUnlocked = false) {
+function createSpecialModeButton(label, x, y, callback, isUnlocked = false, isCompleted = false) {
     const btn = new PIXI.Container();
     
     // 根據解鎖狀態決定顏色
@@ -261,6 +261,17 @@ function createSpecialModeButton(label, x, y, callback, isUnlocked = false) {
     btn.addChild(bg, txt);
     btn.position.set(x, y);
     
+    // 如果已完成特殊模式，在右上角顯示皇冠圖示
+    if (isCompleted) {
+        const crownIcon = new PIXI.Text({ 
+            text: "👑", 
+            style: { fontSize: 16 } 
+        });
+        crownIcon.anchor.set(0.5);
+        crownIcon.position.set(-45, -22);
+        btn.addChild(crownIcon);
+    }
+    
     if (isUnlocked) {
         // 已解鎖：可點擊
         btn.eventMode = 'static';
@@ -268,19 +279,6 @@ function createSpecialModeButton(label, x, y, callback, isUnlocked = false) {
         btn.on('pointerdown', callback);
         btn.on('pointerover', () => bg.tint = 0xc39bd3);
         btn.on('pointerout', () => bg.tint = 0xffffff);
-    } else {
-        // 鎖定：不可點擊
-        btn.eventMode = 'static';
-        btn.cursor = 'not-allowed';
-        
-        // 在按鈕的右上角添加鎖頭符號
-        const lockIcon = new PIXI.Text({ 
-            text: "🔒", 
-            style: { fontSize: 14 } 
-        });
-        lockIcon.anchor.set(0.5);
-        lockIcon.position.set(45, -22);  // 右上角位置
-        btn.addChild(lockIcon);
     }
 
     return btn;
