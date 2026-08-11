@@ -1,5 +1,6 @@
 // 1. 初始化 Pixi 應用程式
 var app = new PIXI.Application(); // 改為 var 方便全域存取
+let octopusTexture = null; // 全域宣告章魚紋理
 
 async function init() {
   // 這裡增加了觸控支援的設定
@@ -12,6 +13,13 @@ async function init() {
     antialias: true // 讓邊緣平滑一點
   });
   document.body.appendChild(app.canvas);
+
+  // ---- 預載入主角章魚圖片資源 ----
+  try {
+    octopusTexture = await PIXI.Assets.load('octopus.png');
+  } catch (e) {
+    console.error('Failed to load octopus.png texture:', e);
+  }
 
   // ---- 將遊戲畫面設為置中視窗樣式 ----
   const canvasStyle = app.canvas.style;
@@ -142,8 +150,14 @@ function setupGame(levelNumber) {
   // 速度
   playerVelocityX = 5;
 
-  // ---- 建立主角小人 ----
-  player = new PIXI.Graphics().rect(0, 0, 32, 48).fill(0x3498db);
+  // ---- 建立主角小人 (章魚圖片 Sprite) ----
+  if (octopusTexture) {
+    player = new PIXI.Sprite(octopusTexture);
+    player.width = 32;
+    player.height = 48;
+  } else {
+    player = new PIXI.Graphics().rect(0, 0, 32, 48).fill(0x3498db);
+  }
 
   player.x = config.playerStart.x;
   player.y = config.playerStart.y;
@@ -196,6 +210,18 @@ function update(ticker) {
   const dt = ticker.deltaTime;
 
   player.x += playerVelocityX * dt;
+
+  // 處理章魚轉向 (依 playerVelocityX 水平翻轉精靈)
+  if (player instanceof PIXI.Sprite && player.texture) {
+    const absScaleX = Math.abs(player.scale.x);
+    if (playerVelocityX > 0) {
+      player.pivot.x = 0;
+      player.scale.x = absScaleX;
+    } else if (playerVelocityX < 0) {
+      player.pivot.x = player.texture.width;
+      player.scale.x = -absScaleX;
+    }
+  }
 
   // 碰牆偵測
   for (let wall of walls) {
