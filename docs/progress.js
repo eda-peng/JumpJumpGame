@@ -15,7 +15,9 @@ class ProgressManager {
         specialModes: {
           CHALLENGE: false,
           TIMING: false
-        }
+        },
+        challengeClearCount: 0,
+        timingBestTime: null
       };
       localStorage.setItem(this.storageKey, JSON.stringify(initialProgress));
     }
@@ -27,14 +29,23 @@ class ProgressManager {
     const defaultProgress = { 
       unlockedLevels: [1], 
       completedLevels: [],
-      specialModes: { CHALLENGE: false, TIMING: false }
+      specialModes: { CHALLENGE: false, TIMING: false },
+      challengeClearCount: 0,
+      timingBestTime: null
     };
     if (!data) return defaultProgress;
     
     const progress = JSON.parse(data);
-    // 確保 specialModes 存在（向後兼容舊存檔）
+    // 確保 specialModes 存在（向後相容舊存檔）
     if (!progress.specialModes) {
       progress.specialModes = { CHALLENGE: false, TIMING: false };
+    }
+    // 向後相容舊存檔之 challengeClearCount 與 timingBestTime
+    if (progress.challengeClearCount === undefined) {
+      progress.challengeClearCount = progress.specialModes.CHALLENGE ? 1 : 0;
+    }
+    if (progress.timingBestTime === undefined) {
+      progress.timingBestTime = null;
     }
     return progress;
   }
@@ -94,20 +105,75 @@ class ProgressManager {
     return Math.round((progress.completedLevels.length / 25) * 100);
   }
 
-  // 標記特殊模式為已完成
-  completeSpecialMode(modeName) {
+  // 取得挑戰模式通關次數
+  getChallengeClearCount() {
     const progress = this.getProgress();
-    if (!progress.specialModes) {
-      progress.specialModes = { CHALLENGE: false, TIMING: false };
-    }
-    progress.specialModes[modeName] = true;
+    return progress.challengeClearCount || 0;
+  }
+
+  // 增加挑戰模式通關次數
+  incrementChallengeClearCount() {
+    const progress = this.getProgress();
+    progress.specialModes = progress.specialModes || { CHALLENGE: false, TIMING: false };
+    progress.specialModes.CHALLENGE = true;
+    progress.challengeClearCount = (progress.challengeClearCount || 0) + 1;
     localStorage.setItem(this.storageKey, JSON.stringify(progress));
+    return progress.challengeClearCount;
+  }
+
+  // 取得計時模式最佳成績 (毫秒, ms)
+  getTimingBestTime() {
+    const progress = this.getProgress();
+    return progress.timingBestTime;
+  }
+
+  // 保存計時模式成績 (傳入毫秒，回傳是否打破紀錄)
+  saveTimingTime(timeMs) {
+    const progress = this.getProgress();
+    progress.specialModes = progress.specialModes || { CHALLENGE: false, TIMING: false };
+    progress.specialModes.TIMING = true;
+
+    let isNewRecord = false;
+    if (progress.timingBestTime === null || progress.timingBestTime === undefined || timeMs < progress.timingBestTime) {
+      progress.timingBestTime = timeMs;
+      isNewRecord = true;
+    }
+    localStorage.setItem(this.storageKey, JSON.stringify(progress));
+    return isNewRecord;
+  }
+
+  // 標記特殊模式為已完成
+  completeSpecialMode(modeName, extraData) {
+    if (modeName === 'CHALLENGE') {
+      this.incrementChallengeClearCount();
+    } else if (modeName === 'TIMING' && typeof extraData === 'number') {
+      return this.saveTimingTime(extraData);
+    } else {
+      const progress = this.getProgress();
+      if (!progress.specialModes) {
+        progress.specialModes = { CHALLENGE: false, TIMING: false };
+      }
+      progress.specialModes[modeName] = true;
+      localStorage.setItem(this.storageKey, JSON.stringify(progress));
+    }
   }
 
   // 檢查特殊模式是否已完成
   isSpecialModeCompleted(modeName) {
     const progress = this.getProgress();
     return progress.specialModes && progress.specialModes[modeName] === true;
+  }
+
+  // 格式化毫秒時間為 MM:SS.ss (例如 01:23.45)
+  formatTime(timeMs) {
+    if (timeMs === null || timeMs === undefined) return "--:--.--";
+    const minutes = Math.floor(timeMs / 60000);
+    const seconds = Math.floor((timeMs % 60000) / 1000);
+    const ms = Math.floor((timeMs % 1000) / 10);
+    const mmStr = String(minutes).padStart(2, '0');
+    const ssStr = String(seconds).padStart(2, '0');
+    const msStr = String(ms).padStart(2, '0');
+    return `${mmStr}:${ssStr}.${msStr}`;
   }
 }
 

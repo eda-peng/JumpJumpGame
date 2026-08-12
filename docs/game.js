@@ -100,6 +100,14 @@ let gameState = "MENU";
 let currentLevel = 0;
 let isAutoNextEnabled = false; // 自動進入下一關的開關
 
+// 計時模式相關變數
+let isTimingMode = false;
+let timingCurrentLevel = 1;
+let timingStartTime = 0;
+let timingElapsedTime = 0;
+let timerHudText = null;
+let timingExitModalContainer = null;
+
 const GRAVITY = 0.6;
 const JUMP_FORCE = -12;
 let playerVelocityX = 3;
@@ -107,16 +115,36 @@ let playerVelocityY = 0;
 let isGrounded = false;
 
 function setupGame(levelNumber) {
-  currentLevel = levelNumber;
+  if (levelNumber === 'TIMING') {
+    isTimingMode = true;
+    timingCurrentLevel = 1;
+    timingStartTime = Date.now();
+    timingElapsedTime = 0;
+    loadLevel(1);
+  } else {
+    isTimingMode = false;
+    loadLevel(levelNumber);
+  }
+}
+
+function loadLevel(levelNum) {
+  currentLevel = levelNum;
   gameState = "PLAYING";
 
   // 清除舊物體
   window.gameContainer.removeChildren();
   walls = [];
   speedZones = [];
-  
+
+  // 清除退出彈窗 (若存在)
+  if (timingExitModalContainer && timingExitModalContainer.parent) {
+    timingExitModalContainer.parent.removeChild(timingExitModalContainer);
+    timingExitModalContainer = null;
+  }
+
   // 讀取當前關卡配置，若無則使用預設配置
-  const config = LEVEL_CONFIGS[levelNumber] || {
+  const configKey = isTimingMode ? timingCurrentLevel : levelNum;
+  const config = LEVEL_CONFIGS[configKey] || {
     playerStart: { x: 100, y: 350 },
     goal: { x: 700, y: 360, w: 40, h: 40 },
     customObjects: []
@@ -163,9 +191,10 @@ function setupGame(levelNumber) {
   player.y = config.playerStart.y;
   window.gameContainer.addChild(player);
 
-  // ---- 3. 點擊偵測 ----
+  // ---- 點擊跳躍偵測 ----
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
+  app.stage.removeAllListeners('pointerdown');
   app.stage.on('pointerdown', () => {
     if (isGrounded && gameState === "PLAYING") {
       playerVelocityY = JUMP_FORCE;
@@ -178,22 +207,33 @@ function setupGame(levelNumber) {
     showScreen('GAME');
   }
 
-  // 加入一個簡單的「退出」按鈕回到選單
+  // 退出按鈕
   window.gameContainer.addChild(createSimpleButton("退出", 50, 30, () => {
-    gameState = "MENU"; // 停止遊戲邏輯運算
-    showScreen('MENU');
+    if (isTimingMode) {
+      showTimingExitModal();
+    } else {
+      gameState = "MENU";
+      showScreen('MENU');
+    }
   }));
-  // 加入「重來」按鈕在退出按鈕下方
-  window.gameContainer.addChild(createSimpleButton("重來", 50, 70, () => setupGame(currentLevel)));
+
+  // 重來按鈕
+  window.gameContainer.addChild(createSimpleButton("重來", 50, 70, () => {
+    if (isTimingMode) {
+      loadLevel(timingCurrentLevel);
+    } else {
+      setupGame(currentLevel);
+    }
+  }));
 
   // 顯示當前關卡文字 (放置於左下角地板區域)
   let displayText = '';
-  if (levelNumber === 'CHALLENGE') {
+  if (isTimingMode) {
+    displayText = `計時模式 (第 ${timingCurrentLevel}/25 關)`;
+  } else if (levelNum === 'CHALLENGE') {
     displayText = '挑戰關卡';
-  } else if (levelNumber === 'TIMING') {
-    displayText = '計時模式';
   } else {
-    displayText = `第 ${levelNumber} 關`;
+    displayText = `第 ${levelNum} 關`;
   }
   const levelText = new PIXI.Text({
     text: displayText,
@@ -201,6 +241,104 @@ function setupGame(levelNumber) {
   });
   levelText.position.set(20, 415);
   window.gameContainer.addChild(levelText);
+
+  // 右上角 HUD 計時器 (僅計時模式下建立)
+  if (isTimingMode) {
+    timerHudText = new PIXI.Text({
+      text: "⏱️ " + (window.progressManager ? window.progressManager.formatTime(timingElapsedTime) : "00:00.00"),
+      style: { fill: 0xf1c40f, fontSize: 18, fontWeight: 'bold' }
+    });
+    timerHudText.anchor.set(1.0, 0.5);
+    timerHudText.position.set(780, 25);
+    window.gameContainer.addChild(timerHudText);
+  } else {
+    timerHudText = null;
+  }
+}
+
+function showTimingExitModal() {
+  gameState = "PAUSED";
+  const pausedAt = Date.now();
+
+  if (timingExitModalContainer && timingExitModalContainer.parent) {
+    timingExitModalContainer.parent.removeChild(timingExitModalContainer);
+  }
+
+  timingExitModalContainer = new PIXI.Container();
+
+  // 背景半透明遮罩
+  const mask = new PIXI.Graphics().rect(0, 0, 800, 450).fill(0x000000, 0.7);
+  mask.eventMode = 'static';
+  timingExitModalContainer.addChild(mask);
+
+  // 對話框底板
+  const dialog = new PIXI.Graphics()
+    .roundRect(200, 110, 400, 230, 15)
+    .fill(0x2c3e50)
+    .stroke({ width: 3, color: 0xe74c3c });
+  timingExitModalContainer.addChild(dialog);
+
+  // 標題
+  const title = new PIXI.Text({
+    text: "⚠️ 退出確認",
+    style: { fill: 0xe74c3c, fontSize: 24, fontWeight: 'bold' }
+  });
+  title.anchor.set(0.5);
+  title.position.set(400, 150);
+  timingExitModalContainer.addChild(title);
+
+  // 說明文字
+  const msg = new PIXI.Text({
+    text: "計時模式進行中，確定要退出嗎？\n（當前的計時與進度將會遺失）",
+    style: { fill: 0xffffff, fontSize: 16, align: 'center' }
+  });
+  msg.anchor.set(0.5);
+  msg.position.set(400, 205);
+  timingExitModalContainer.addChild(msg);
+
+  // 按鈕 1: 繼續遊戲
+  const resumeBtn = createCustomModalBtn("繼續遊戲", 310, 280, 0x27ae60, () => {
+    if (timingExitModalContainer && timingExitModalContainer.parent) {
+      timingExitModalContainer.parent.removeChild(timingExitModalContainer);
+    }
+    timingExitModalContainer = null;
+    timingStartTime += (Date.now() - pausedAt);
+    gameState = "PLAYING";
+  });
+
+  // 按鈕 2: 確認退出
+  const exitBtn = createCustomModalBtn("確認退出", 490, 280, 0xc0392b, () => {
+    if (timingExitModalContainer && timingExitModalContainer.parent) {
+      timingExitModalContainer.parent.removeChild(timingExitModalContainer);
+    }
+    timingExitModalContainer = null;
+    isTimingMode = false;
+    gameState = "MENU";
+    if (typeof showScreen === 'function') {
+      showScreen('MENU');
+    }
+  });
+
+  timingExitModalContainer.addChild(resumeBtn, exitBtn);
+  app.stage.addChild(timingExitModalContainer);
+}
+
+function createCustomModalBtn(label, x, y, bgColor, callback) {
+  const btn = new PIXI.Container();
+  const bg = new PIXI.Graphics().roundRect(-60, -20, 120, 40, 8).fill(bgColor);
+  const txt = new PIXI.Text({ text: label, style: { fill: 0xffffff, fontSize: 16, fontWeight: 'bold' } });
+  txt.anchor.set(0.5);
+  btn.addChild(bg, txt);
+  btn.position.set(x, y);
+  btn.eventMode = 'static';
+  btn.cursor = 'pointer';
+  btn.on('pointerdown', (e) => {
+    e.stopPropagation();
+    callback();
+  });
+  btn.on('pointerover', () => bg.tint = 0xbdc3c7);
+  btn.on('pointerout', () => bg.tint = 0xffffff);
+  return btn;
 }
 
 function update(ticker) {
@@ -208,6 +346,14 @@ function update(ticker) {
 
   // 使用 ticker.deltaTime 確保在不同螢幕重新整理率下速度一致
   const dt = ticker.deltaTime;
+
+  // 計時模式更新累計時間與 HUD
+  if (isTimingMode) {
+    timingElapsedTime = Date.now() - timingStartTime;
+    if (timerHudText && window.progressManager) {
+      timerHudText.text = "⏱️ " + window.progressManager.formatTime(timingElapsedTime);
+    }
+  }
 
   player.x += playerVelocityX * dt;
 
@@ -225,7 +371,6 @@ function update(ticker) {
 
   // 碰牆偵測
   for (let wall of walls) {
-    // 使用 getBounds() 取得最新的位置資訊
     const playerBounds = player.getBounds();
     const wallBounds = wall.getBounds();
 
@@ -233,7 +378,6 @@ function update(ticker) {
       if (checkCollision(playerBounds, wallBounds) && 
           playerBounds.y + playerBounds.height > wallBounds.y + 10) { // 只有非站在頂端時才反彈
         
-        // 修正：不僅反轉速度，還需將小人移出牆壁碰撞盒，防止因座標重疊導致的重複反彈（卡住）
         if (playerVelocityX > 0) {
           player.x = wallBounds.x - playerBounds.width;
         } else {
@@ -252,7 +396,11 @@ function update(ticker) {
 
   // 檢查是否跳出畫面左右兩側 (自動重來)
   if (player.x + player.width < 0 || player.x > 800) {
-    setupGame(currentLevel);
+    if (isTimingMode) {
+      loadLevel(timingCurrentLevel);
+    } else {
+      setupGame(currentLevel);
+    }
     return;
   }
 
@@ -263,7 +411,6 @@ function update(ticker) {
     const wallBounds = wall.getBounds();
 
     if (checkCollision(playerBounds, wallBounds)) {
-      // 只要是向下掉落，且腳底接近平台頂端（容許誤差增加到 15），就判定著地
       if (playerVelocityY >= 0 && playerBounds.y + playerBounds.height - (playerVelocityY + 1) <= wallBounds.y + 10) {
         player.y = wallBounds.y - playerBounds.height;
         playerVelocityY = 0;
@@ -278,7 +425,7 @@ function update(ticker) {
     const zoneBounds = zone.getBounds();
 
     if (checkCollision(playerBounds, zoneBounds)) {
-      if (!zone._isTouched) { // 只有在剛進入區塊時觸發
+      if (!zone._isTouched) {
         let currentSpeed = Math.abs(playerVelocityX);
         if (zone.objectType === 'speedup') {
           currentSpeed = Math.min(10, currentSpeed + 0.5);
@@ -289,40 +436,58 @@ function update(ticker) {
         zone._isTouched = true;
       }
     } else {
-      zone._isTouched = false; // 離開區塊後重設，下次進入可再次觸發
+      zone._isTouched = false;
     }
   }
 
   // 終點
   if (checkCollision(player.getBounds(), goal.getBounds())) {
-    gameState = "WIN";
-    
-    // 只為數字型關卡標記進度
-    if (typeof currentLevel === 'number' && window.progressManager) {
-      window.progressManager.completeLevel(currentLevel);
-    }
-    
-    // 如果是挑戰關或計時模式，標記為已完成並回到關卡選擇
-    if (currentLevel === 'CHALLENGE' || currentLevel === 'TIMING') {
-      if (window.progressManager) {
-        window.progressManager.completeSpecialMode(currentLevel);
-      }
-      if (typeof showScreen === 'function') {
-        showScreen('LEVEL_CLEAR');
-      }
-    } else if (isAutoNextEnabled && currentLevel < 25) {
-      // 檢查下一關是否已解鎖，若已解鎖則自動進入
-      const nextLevelUnlocked = window.progressManager && window.progressManager.isLevelUnlocked(currentLevel + 1);
-      if (nextLevelUnlocked) {
-        setTimeout(() => setupGame(currentLevel + 1), 500);
+    if (isTimingMode) {
+      if (timingCurrentLevel < 25) {
+        // Option A: 無縫進入下一關
+        timingCurrentLevel++;
+        loadLevel(timingCurrentLevel);
       } else {
+        // 通關第 25 關！
+        gameState = "WIN";
+        timingElapsedTime = Date.now() - timingStartTime;
+        if (window.progressManager) {
+          window.progressManager.completeSpecialMode('TIMING', timingElapsedTime);
+        }
+        currentLevel = 'TIMING';
         if (typeof showScreen === 'function') {
           showScreen('LEVEL_CLEAR');
         }
       }
     } else {
-      if (typeof showScreen === 'function') {
-        showScreen('LEVEL_CLEAR');
+      gameState = "WIN";
+      
+      // 只為數字型關卡標記進度
+      if (typeof currentLevel === 'number' && window.progressManager) {
+        window.progressManager.completeLevel(currentLevel);
+      }
+      
+      // 如果是挑戰關
+      if (currentLevel === 'CHALLENGE') {
+        if (window.progressManager) {
+          window.progressManager.completeSpecialMode('CHALLENGE');
+        }
+        if (typeof showScreen === 'function') {
+          showScreen('LEVEL_CLEAR');
+        }
+      } else if (isAutoNextEnabled && currentLevel < 25) {
+        const nextLevelUnlocked = window.progressManager && window.progressManager.isLevelUnlocked(currentLevel + 1);
+        if (nextLevelUnlocked) {
+          setTimeout(() => setupGame(currentLevel + 1), 500);
+        } else {
+          if (typeof showScreen === 'function') {
+            showScreen('LEVEL_CLEAR');
+          }
+        }
+      } else {
+        if (typeof showScreen === 'function') {
+          showScreen('LEVEL_CLEAR');
+        }
       }
     }
   }

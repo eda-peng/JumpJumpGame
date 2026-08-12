@@ -64,13 +64,19 @@ function initMenu() {
         .stroke({ width: 4, color: 0xf1c40f });
     levelClearContainer.addChild(modalBase);
 
-    const clearTitle = new PIXI.Text({ text: "恭喜過關！", style: { fill: 0xf1c40f, fontSize: 48, fontWeight: 'bold' } });
+    const clearTitle = new PIXI.Text({ text: "恭喜過關！", style: { fill: 0xf1c40f, fontSize: 40, fontWeight: 'bold' } });
     clearTitle.anchor.set(0.5);
-    clearTitle.position.set(400, 150);
+    clearTitle.position.set(400, 130);
     levelClearContainer.addChild(clearTitle);
 
+    const clearSubText = new PIXI.Text({ text: "", style: { fill: 0xffffff, fontSize: 16, align: 'center' } });
+    clearSubText.anchor.set(0.5);
+    clearSubText.position.set(400, 190);
+    clearSubText.label = "clearSubText";
+    levelClearContainer.addChild(clearSubText);
+
     // 初始化 - 總是創建兩個按鈕，動態調整交由 showScreen() 處理
-    levelClearContainer.addChild(createMenuButton("下一關", 400, 250, () => {
+    levelClearContainer.addChild(createMenuButton("下一關", 400, 260, () => {
         if (currentLevel < 25) {
             setupGame(currentLevel + 1);
         } else {
@@ -94,10 +100,32 @@ function showScreen(screen) {
         updateLevelButtons();
     }
 
-    // 當顯示過關畫面時，動態調整按鈕顯示
+    // 當顯示過關畫面時，動態調整按鈕顯示與副標題
     if (screen === "LEVEL_CLEAR") {
+        let subTxt = null;
+        for (let child of levelClearContainer.children) {
+            if (child.label === "clearSubText") {
+                subTxt = child;
+                break;
+            }
+        }
+        if (subTxt) {
+            if (currentLevel === 'CHALLENGE') {
+                const count = window.progressManager ? window.progressManager.getChallengeClearCount() : 0;
+                subTxt.text = `挑戰成功！累積通關次數: ${count} 次`;
+            } else if (currentLevel === 'TIMING') {
+                const timeMs = typeof timingElapsedTime !== 'undefined' ? timingElapsedTime : 0;
+                const formattedTime = window.progressManager ? window.progressManager.formatTime(timeMs) : '';
+                const bestMs = window.progressManager ? window.progressManager.getTimingBestTime() : null;
+                const isNew = bestMs === timeMs;
+                subTxt.text = `計時模式通關！\n本次成績: ${formattedTime}${isNew ? ' (🎉 刷新紀錄!)' : ''}`;
+            } else {
+                subTxt.text = "";
+            }
+        }
+
         // 獲取"下一關"按鈕和"返回關卡選擇"按鈕
-        const buttons = levelClearContainer.children.slice(2); // 跳過背景和標題
+        const buttons = levelClearContainer.children.filter(c => c instanceof PIXI.Container && c.cursor === 'pointer');
         for (let btn of buttons) {
             const btnText = btn.children[1]?.text;
             if (btnText === "下一關") {
@@ -165,15 +193,32 @@ function updateLevelButtons() {
     // 只有在完成25關時才顯示特殊模式按鈕
     if (window.progressManager.isLevelCompleted(25)) {
         // 新增"挑戰"按鈕（在第21關下方）
-        const challengeBtn = createSpecialModeButton("挑戰", 180, 400, () => {
-            setupGame('CHALLENGE');
-        }, true, window.progressManager.isSpecialModeCompleted('CHALLENGE'));
+        const challengeCount = window.progressManager.getChallengeClearCount();
+        const challengeBtn = createSpecialModeButton(
+            "挑戰", 
+            180, 395, 
+            () => setupGame('CHALLENGE'), 
+            true, 
+            challengeCount > 0,
+            `通關次數: ${challengeCount} 次`
+        );
         buttonsGroup.addChild(challengeBtn);
 
         // 新增"計時模式"按鈕（在第25關下方）
-        const timingModeBtn = createSpecialModeButton("計時模式", 620, 400, () => {
-            // 待實現功能
-        }, true, false);
+        const bestTimeMs = window.progressManager.getTimingBestTime();
+        const isTimingCompleted = window.progressManager.isSpecialModeCompleted('TIMING');
+        const timingSubText = bestTimeMs !== null 
+            ? `最佳紀錄: ${window.progressManager.formatTime(bestTimeMs)}` 
+            : `最佳紀錄: --:--.--`;
+
+        const timingModeBtn = createSpecialModeButton(
+            "計時模式", 
+            620, 395, 
+            () => setupGame('TIMING'), 
+            true, 
+            isTimingCompleted,
+            timingSubText
+        );
         buttonsGroup.addChild(timingModeBtn);
     }
     
@@ -248,7 +293,7 @@ function createLevelButton(num, x, y, callback, isUnlocked = true, isCompleted =
     return btn;
 }
 
-function createSpecialModeButton(label, x, y, callback, isUnlocked = false, isCompleted = false) {
+function createSpecialModeButton(label, x, y, callback, isUnlocked = false, isCompleted = false, subText = '') {
     const btn = new PIXI.Container();
     
     // 根據解鎖狀態決定顏色
@@ -270,6 +315,17 @@ function createSpecialModeButton(label, x, y, callback, isUnlocked = false, isCo
         crownIcon.anchor.set(0.5);
         crownIcon.position.set(-45, -22);
         btn.addChild(crownIcon);
+    }
+
+    // 按鈕下方次要標籤 (如通關次數或最佳時間)
+    if (subText) {
+        const subTxt = new PIXI.Text({
+            text: subText,
+            style: { fill: 0xf1c40f, fontSize: 12, fontWeight: 'bold' }
+        });
+        subTxt.anchor.set(0.5, 0);
+        subTxt.position.set(0, 25);
+        btn.addChild(subTxt);
     }
     
     if (isUnlocked) {
