@@ -2,6 +2,358 @@
 var app = new PIXI.Application(); // 改為 var 方便全域存取
 let octopusTexture = null; // 全域宣告章魚紋理
 
+// ---- 海洋主題：程序化繪圖元件 (水草、海葵、寶箱) ----
+
+class SeaweedZone extends PIXI.Container {
+  constructor(x, y, w, h) {
+    super();
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.objectType = 'speedup';
+    this._isTouched = false;
+    this.time = Math.random() * 10;
+
+    this.graphics = new PIXI.Graphics();
+    this.addChild(this.graphics);
+    this.renderSeaweed();
+  }
+
+  update(delta) {
+    this.time += 0.05 * (delta || 1);
+    this.renderSeaweed();
+  }
+
+  renderSeaweed() {
+    const g = this.graphics;
+    g.clear();
+
+    // 翡翠綠底色光圈 (標示加速區)
+    g.rect(0, 0, this.w, this.h).fill({ color: 0x27ae60, alpha: 0.2 });
+    g.rect(0, 0, this.w, this.h).stroke({ width: 2, color: 0x2ecc71, alpha: 0.8 });
+
+    // 根據寬度繪製水草葉片叢
+    const bladeCount = Math.max(2, Math.floor(this.w / 12));
+    const bladeSpacing = this.w / bladeCount;
+
+    for (let i = 0; i < bladeCount; i++) {
+      const baseX = bladeSpacing * i + bladeSpacing / 2;
+      const baseY = this.h;
+      const heightRatio = 0.7 + (i % 3) * 0.15;
+      const bladeH = this.h * heightRatio;
+      
+      const wave = Math.sin(this.time + i * 0.9) * 6;
+      const tipX = baseX + wave;
+      const tipY = baseY - bladeH;
+      const ctrlX = baseX + wave * 0.5;
+      const ctrlY = baseY - bladeH * 0.5;
+
+      // 水草葉片雙向貝茲曲線主體
+      g.moveTo(baseX - 3, baseY)
+       .quadraticCurveTo(ctrlX - 2, ctrlY, tipX, tipY)
+       .quadraticCurveTo(ctrlX + 3, ctrlY, baseX + 3, baseY)
+       .fill(0x27ae60);
+
+      // 葉脈亮綠高光
+      g.moveTo(baseX, baseY)
+       .quadraticCurveTo(ctrlX, ctrlY, tipX, tipY)
+       .stroke({ width: 1.5, color: 0x2ecc71 });
+    }
+
+    // 根部小岩石顆粒
+    g.circle(this.w * 0.2, this.h - 2, 3).fill(0x34495e);
+    g.circle(this.w * 0.5, this.h - 3, 4).fill(0x2c3e50);
+    g.circle(this.w * 0.8, this.h - 2, 3).fill(0x34495e);
+  }
+}
+
+class AnemoneZone extends PIXI.Container {
+  constructor(x, y, w, h) {
+    super();
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.objectType = 'speeddown';
+    this._isTouched = false;
+    this.time = Math.random() * 10;
+
+    this.graphics = new PIXI.Graphics();
+    this.addChild(this.graphics);
+    this.renderAnemone();
+  }
+
+  update(delta) {
+    this.time += 0.06 * (delta || 1);
+    this.renderAnemone();
+  }
+
+  renderAnemone() {
+    const g = this.graphics;
+    g.clear();
+
+    // 暗紅色警示區域底色
+    g.rect(0, 0, this.w, this.h).fill({ color: 0xc0392b, alpha: 0.2 });
+    g.rect(0, 0, this.w, this.h).stroke({ width: 2, color: 0xe74c3c, alpha: 0.8 });
+
+    const baseY = this.h;
+    const anemoneCount = Math.max(1, Math.floor(this.w / 20));
+    const spacing = this.w / anemoneCount;
+
+    for (let a = 0; a < anemoneCount; a++) {
+      const cx = spacing * a + spacing / 2;
+      const cy = baseY - 8;
+      const pulse = Math.cos(this.time + a * 1.2) * 2;
+
+      // 海葵底座
+      g.ellipse(cx, cy, 10 + pulse, 8).fill(0xc0392b);
+
+      // 觸手叢與微動彈力感
+      const tentacleCount = 7;
+      for (let t = 0; t < tentacleCount; t++) {
+        const angle = (Math.PI / (tentacleCount - 1)) * t - Math.PI;
+        const len = 12 + Math.sin(this.time * 2 + t) * 3;
+        const tx = cx + Math.cos(angle) * len;
+        const ty = cy + Math.sin(angle) * len;
+
+        g.moveTo(cx, cy)
+         .quadraticCurveTo(cx + Math.cos(angle) * (len * 0.5) + pulse, cy + Math.sin(angle) * (len * 0.5), tx, ty)
+         .stroke({ width: 3, color: 0xe74c3c, cap: 'round' });
+        
+        // 觸手末端粉紅頂柱
+        g.circle(tx, ty, 2).fill(0xff7675);
+      }
+    }
+  }
+}
+
+class ShrimpGoal extends PIXI.Container {
+  constructor(x, y, w, h) {
+    super();
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.time = Math.random() * 10;
+
+    this.graphics = new PIXI.Graphics();
+    this.addChild(this.graphics);
+    this.renderShrimp();
+  }
+
+  update(delta) {
+    this.time += 0.06 * (delta || 1);
+    this.renderShrimp();
+  }
+
+  renderShrimp() {
+    const g = this.graphics;
+    g.clear();
+
+    const w = this.w;
+    const h = this.h;
+    const cx = w / 2;
+    const cy = h / 2;
+    const bounce = Math.sin(this.time * 2.5) * 3;
+    const whiskerWave = Math.sin(this.time * 3.5) * 4;
+
+    // 蝦子目標環狀光暈
+    g.circle(cx, cy + bounce, 18).fill({ color: 0xff7675, alpha: 0.25 });
+    g.circle(cx, cy + bounce, 25).fill({ color: 0xfab1a0, alpha: 0.15 });
+
+    // 蝦子弧形鮮紅身體
+    g.moveTo(cx - 10, cy + 8 + bounce)
+     .quadraticCurveTo(cx - 14, cy - 6 + bounce, cx, cy - 10 + bounce)
+     .quadraticCurveTo(cx + 12, cy - 6 + bounce, cx + 8, cy + 8 + bounce)
+     .quadraticCurveTo(cx - 2, cy + 12 + bounce, cx - 10, cy + 8 + bounce)
+     .fill(0xff7675);
+
+    // 蝦身紋理分節
+    g.arc(cx - 2, cy - 2 + bounce, 8, Math.PI * 0.8, Math.PI * 1.8).stroke({ width: 2, color: 0xd63031 });
+    g.arc(cx + 3, cy + 2 + bounce, 7, Math.PI * 0.8, Math.PI * 1.8).stroke({ width: 2, color: 0xd63031 });
+
+    // 蝦尾 (扇形)
+    g.moveTo(cx + 8, cy + 8 + bounce)
+     .lineTo(cx + 14, cy + 16 + bounce)
+     .lineTo(cx + 8, cy + 14 + bounce)
+     .lineTo(cx + 2, cy + 16 + bounce)
+     .fill(0xd63031);
+
+    // 卡通大眼睛
+    g.circle(cx - 6, cy - 6 + bounce, 3.5).fill(0xffffff);
+    g.circle(cx - 6.5, cy - 6 + bounce, 2).fill(0x2d3436);
+
+    // 長鬚搖曳 (鮮明觸角)
+    g.moveTo(cx - 8, cy - 8 + bounce)
+     .quadraticCurveTo(cx - 16, cy - 16 + bounce, cx - 22 + whiskerWave, cy - 20 + bounce)
+     .stroke({ width: 1.8, color: 0xffeaa7 });
+    g.moveTo(cx - 6, cy - 8 + bounce)
+     .quadraticCurveTo(cx - 14, cy - 20 + bounce, cx - 18 - whiskerWave, cy - 24 + bounce)
+     .stroke({ width: 1.8, color: 0xffeaa7 });
+
+    // 閃耀星光 (Sparkles)
+    g.poly([
+      cx + 12, cy - 12 + bounce,
+      cx + 14, cy - 8 + bounce,
+      cx + 18, cy - 6 + bounce,
+      cx + 14, cy - 4 + bounce,
+      cx + 12, cy + bounce,
+      cx + 10, cy - 4 + bounce,
+      cx + 6, cy - 6 + bounce,
+      cx + 10, cy - 8 + bounce
+    ]).fill(0xfff200);
+  }
+}
+
+class OceanBubbleSystem extends PIXI.Container {
+  constructor() {
+    super();
+    this.bubbles = [];
+    for (let i = 0; i < 25; i++) {
+      this.bubbles.push({
+        baseX: Math.random() * 800,
+        y: Math.random() * 450,
+        radius: 2 + Math.random() * 6,
+        speed: 0.4 + Math.random() * 1.0,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+    this.graphics = new PIXI.Graphics();
+    this.addChild(this.graphics);
+  }
+
+  update(delta) {
+    const g = this.graphics;
+    g.clear();
+
+    const dt = delta || 1;
+    this.bubbles.forEach(b => {
+      b.y -= b.speed * dt;
+      b.phase += 0.03 * dt;
+      const currentX = b.baseX + Math.sin(b.phase) * 12;
+
+      if (b.y < -20) {
+        b.y = 470;
+      }
+
+      g.circle(currentX, b.y, b.radius).fill({ color: 0xffffff, alpha: 0.2 });
+      g.circle(currentX, b.y, b.radius).stroke({ width: 1, color: 0xffffff, alpha: 0.4 });
+      g.circle(currentX - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.25).fill({ color: 0xffffff, alpha: 0.6 });
+    });
+  }
+}
+
+function createOceanFloor(x, y, w, h) {
+  const container = new PIXI.Container();
+  container.x = x;
+  container.y = y;
+
+  const g = new PIXI.Graphics();
+  // 金黃砂層
+  g.rect(0, 0, w, h).fill(0xdfb06c);
+  // 頂部淺粉珊瑚沙線條
+  g.rect(0, 0, w, 6).fill(0xf3a683);
+
+  // 小貝殼與沉積石
+  for (let px = 30; px < w; px += 50) {
+    g.arc(px, 12, 5, Math.PI, 0).fill(0xe84393);
+    g.circle(px + 20, 16, 3).fill(0x74b9ff);
+  }
+
+  container.addChild(g);
+  return container;
+}
+
+function createCoralWall(x, y, w, h, isBoundary = false) {
+  const container = new PIXI.Container();
+  container.x = x;
+  container.y = y;
+
+  const g = new PIXI.Graphics();
+  if (isBoundary) {
+    // 滿版無縫邊界柱 (直角平貼畫布外緣，消除左右與底角縫隙)
+    g.rect(0, 0, w, h).fill(0x2c3e50);
+    const innerX = x === 0 ? 0 : 2;
+    const innerW = (x === 0 || x === 760) ? w - 2 : w - 4;
+    g.rect(innerX, 0, innerW, h).fill(0x34495e);
+    
+    // 牆頂/地板頂端綠色海藻裝飾
+    if (y < 400) {
+      g.rect(0, 0, w, 4).fill(0x16a085);
+    } else {
+      g.rect(0, 0, w, 6).fill(0x16a085);
+    }
+  } else {
+    // 懸空平台 (保留圓角美感)
+    g.roundRect(0, 0, w, h, 6).fill(0x2c3e50);
+    g.roundRect(2, 2, w - 4, h - 4, 4).fill(0x34495e);
+    g.rect(0, 0, w, 4).fill(0x16a085);
+  }
+
+  container.addChild(g);
+  return container;
+}
+
+class CuteOctopusPlayer extends PIXI.Container {
+  constructor(w = 32, h = 48) {
+    super();
+    this.w = w;
+    this.h = h;
+
+    // 精準透明碰撞基底框 (100% 鎖定為 32x48 像素，確保 getBounds() 與原版完全一致)
+    this.boundsBox = new PIXI.Graphics().rect(0, 0, w, h).fill({ alpha: 0 });
+    this.addChild(this.boundsBox);
+
+    // 內部轉向容器 (對齊 0,0 碰撞框)
+    this.body = new PIXI.Container();
+    this.body.position.set(w / 2, h / 2);
+    this.body.pivot.set(w / 2, h / 2);
+    this.addChild(this.body);
+
+    this.graphics = new PIXI.Graphics();
+    this.body.addChild(this.graphics);
+    this.renderCuteOctopus();
+  }
+
+  setFacing(direction) {
+    if (direction > 0) {
+      this.body.scale.x = 1;
+    } else if (direction < 0) {
+      this.body.scale.x = -1;
+    }
+  }
+
+  renderCuteOctopus() {
+    const g = this.graphics;
+    g.clear();
+
+    const w = this.w;
+    const h = this.h;
+    const cx = w / 2;
+
+    // 章魚大頭 (Top: y=2, Bottom: y=34)
+    g.ellipse(cx, 18, w * 0.42, 16).fill(0xff7675);
+
+    // 水汪汪大眼睛
+    g.circle(cx - 5, 16, 4).fill(0xffffff);
+    g.circle(cx - 4, 16, 2).fill(0x2d3436);
+    g.circle(cx + 5, 16, 4).fill(0xffffff);
+    g.circle(cx + 4, 16, 2).fill(0x2d3436);
+
+    // 可愛紅暈
+    g.ellipse(cx - 8, 22, 3, 2).fill({ color: 0xd63031, alpha: 0.6 });
+    g.ellipse(cx + 8, 22, 3, 2).fill({ color: 0xd63031, alpha: 0.6 });
+
+    // 觸手排開 (y=30 到 y=47，精準包含在 48 像素高度內)
+    for (let t = -3; t <= 3; t += 2) {
+      g.moveTo(cx + t * 3, 30)
+       .quadraticCurveTo(cx + t * 5, 40, cx + t * 4, 47)
+       .stroke({ width: 3, color: 0xe84393, cap: 'round' });
+    }
+  }
+}
+
 async function init() {
   // 這裡增加了觸控支援的設定
   await app.init({
@@ -27,9 +379,9 @@ async function init() {
   canvasStyle.maxHeight = '100vh';
   canvasStyle.width = 'auto';
   canvasStyle.height = 'auto';
-  canvasStyle.border = '5px solid #34495e';
+  canvasStyle.border = '4px solid #1b2631'; // 平滑沉穩的邊框顏色
   canvasStyle.boxSizing = 'border-box'; // 確保邊框不會撐大畫布
-  canvasStyle.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
+  canvasStyle.boxShadow = '0 20px 50px rgba(0,0,0,0.6)';
 
   document.body.style.backgroundColor = '#1a252f';
   document.body.style.margin = '0';
@@ -96,6 +448,7 @@ let player;
 let walls = [];
 let speedZones = []; // 儲存加速與減速區塊
 let goal;
+let oceanBubbles = null; // 海洋氣泡背景系統
 let gameState = "MENU";
 let currentLevel = 0;
 let isAutoNextEnabled = false; // 自動進入下一關的開關
@@ -150,18 +503,36 @@ function loadLevel(levelNum) {
     customObjects: []
   };
 
-  // ---- 共通邊界 (地板與左右牆) ----
-  const floor = new PIXI.Graphics().rect(0, 400, 800, 50).fill(0x7f8c8d);
-  const leftWall = new PIXI.Graphics().rect(0, 0, 40, 450).fill(0x7f8c8d);
-  const rightWall = new PIXI.Graphics().rect(760, 0, 40, 450).fill(0x7f8c8d);
+  // ---- 1. 關卡內海洋背景與陽光折射 ----
+  const oceanBg = new PIXI.Graphics();
+  oceanBg.rect(0, 0, 800, 450).fill(0x0f3460);
+  oceanBg.poly([0, 0, 160, 0, 320, 450, 0, 450]).fill({ color: 0x00d2d3, alpha: 0.08 });
+  oceanBg.poly([360, 0, 520, 0, 720, 450, 420, 450]).fill({ color: 0x00d2d3, alpha: 0.08 });
+  window.gameContainer.addChild(oceanBg);
+
+  // ---- 2. 海洋漂浮氣泡系統 ----
+  oceanBubbles = new OceanBubbleSystem();
+  window.gameContainer.addChild(oceanBubbles);
+
+  // ---- 3. 共通邊界 (滿版無縫貼合) ----
+  const floor = createCoralWall(0, 400, 800, 50, true);
+  const leftWall = createCoralWall(0, 0, 40, 450, true);
+  const rightWall = createCoralWall(760, 0, 40, 450, true);
   window.gameContainer.addChild(floor, leftWall, rightWall);
   walls.push(floor, leftWall, rightWall);
 
-  // ---- 建立自定義物件 (由資料驅動) ----
+  // ---- 4. 建立自定義物件 (由資料驅動) ----
   config.customObjects.forEach(obj => {
-    const graphics = new PIXI.Graphics().rect(obj.x, obj.y, obj.w, obj.h).fill(obj.color);
-    graphics.objectType = obj.type || 'wall'; // 標記類型
-    graphics._isTouched = false; // 用於確保一次接觸只觸發一次效果
+    let graphics;
+    if (obj.type === 'speedup') {
+      graphics = new SeaweedZone(obj.x, obj.y, obj.w, obj.h);
+    } else if (obj.type === 'speeddown') {
+      graphics = new AnemoneZone(obj.x, obj.y, obj.w, obj.h);
+    } else {
+      graphics = createCoralWall(obj.x, obj.y, obj.w, obj.h);
+      graphics.objectType = obj.type || 'wall';
+      graphics._isTouched = false;
+    }
     window.gameContainer.addChild(graphics);
     
     if (obj.type === 'speedup' || obj.type === 'speeddown') {
@@ -171,22 +542,15 @@ function loadLevel(levelNum) {
     }
   });
 
-  // ---- 建立終點 ----
-  goal = new PIXI.Graphics().rect(config.goal.x, config.goal.y, config.goal.w, config.goal.h).fill(0xf1c40f);
+  // ---- 5. 建立終點 (可愛發光蝦子 🦐✨) ----
+  goal = new ShrimpGoal(config.goal.x, config.goal.y, config.goal.w, config.goal.h);
   window.gameContainer.addChild(goal);
 
   // 速度
   playerVelocityX = 5;
 
-  // ---- 建立主角小人 (章魚圖片 Sprite) ----
-  if (octopusTexture) {
-    player = new PIXI.Sprite(octopusTexture);
-    player.width = 32;
-    player.height = 48;
-  } else {
-    player = new PIXI.Graphics().rect(0, 0, 32, 48).fill(0x3498db);
-  }
-
+  // ---- 6. 建立主角章魚 (可愛章魚元件) ----
+  player = new CuteOctopusPlayer(32, 48);
   player.x = config.playerStart.x;
   player.y = config.playerStart.y;
   window.gameContainer.addChild(player);
@@ -347,6 +711,14 @@ function update(ticker) {
   // 使用 ticker.deltaTime 確保在不同螢幕重新整理率下速度一致
   const dt = ticker.deltaTime;
 
+  // 更新海洋氣泡背景與終點珍珠蚌殼動畫
+  if (oceanBubbles) {
+    oceanBubbles.update(dt);
+  }
+  if (goal && typeof goal.update === 'function') {
+    goal.update(dt);
+  }
+
   // 計時模式更新累計時間與 HUD
   if (isTimingMode) {
     timingElapsedTime = Date.now() - timingStartTime;
@@ -357,16 +729,9 @@ function update(ticker) {
 
   player.x += playerVelocityX * dt;
 
-  // 處理章魚轉向 (依 playerVelocityX 水平翻轉精靈)
-  if (player instanceof PIXI.Sprite && player.texture) {
-    const absScaleX = Math.abs(player.scale.x);
-    if (playerVelocityX > 0) {
-      player.pivot.x = 0;
-      player.scale.x = absScaleX;
-    } else if (playerVelocityX < 0) {
-      player.pivot.x = player.texture.width;
-      player.scale.x = -absScaleX;
-    }
+  // 處理章魚轉向 (依 playerVelocityX 水平翻轉內部 body)
+  if (player && typeof player.setFacing === 'function') {
+    player.setFacing(playerVelocityX);
   }
 
   // 碰牆偵測
@@ -421,6 +786,10 @@ function update(ticker) {
 
   // 速度區塊偵測 (加速/減速)
   for (let zone of speedZones) {
+    if (typeof zone.update === 'function') {
+      zone.update(dt);
+    }
+
     const playerBounds = player.getBounds();
     const zoneBounds = zone.getBounds();
 

@@ -333,4 +333,4 @@ const LEVEL_CONFIGS = {
       // { x: 450, y: 80, w: 100, h: 40, color: 0x7f8c8d },  // 上地板
     ]
   },
-};
+}
