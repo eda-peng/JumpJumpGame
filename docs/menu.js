@@ -6,6 +6,43 @@ function initMenu() {
     menuContainer = new PIXI.Container();
     app.stage.addChild(menuContainer);
 
+    // 底部關卡珊瑚地板 (背景裝飾)
+    if (typeof createCoralWall === 'function') {
+        const menuFloor = createCoralWall(0, 400, 800, 50, true);
+        menuContainer.addChild(menuFloor);
+    }
+
+    // 主選單背景裝飾：左側 2 個水草與右側 2 個海葵
+    const menuDecorations = [];
+    if (typeof SeaweedZone === 'function') {
+        const seaweed1 = new SeaweedZone(100, 365, 40, 35);
+        const seaweed2 = new SeaweedZone(150, 365, 40, 35);
+        seaweed1.eventMode = 'none';
+        seaweed2.eventMode = 'none';
+        menuContainer.addChild(seaweed1, seaweed2);
+        menuDecorations.push(seaweed1, seaweed2);
+    }
+    if (typeof AnemoneZone === 'function') {
+        const anemone1 = new AnemoneZone(600, 370, 40, 30);
+        const anemone2 = new AnemoneZone(650, 370, 40, 30);
+        anemone1.eventMode = 'none';
+        anemone2.eventMode = 'none';
+        menuContainer.addChild(anemone1, anemone2);
+        menuDecorations.push(anemone1, anemone2);
+    }
+
+    // 非互動快跑章魚 (純背景動態，自動跳躍過海葵)
+    let menuRunnerOctopus = null;
+    const groundY = 352;
+    if (typeof CuteOctopusPlayer === 'function') {
+        menuRunnerOctopus = new CuteOctopusPlayer(32, 48);
+        menuRunnerOctopus.eventMode = 'none';
+        menuRunnerOctopus.position.set(-40, groundY);
+        menuRunnerOctopus.vy = 0;
+        menuRunnerOctopus.isGrounded = true;
+        menuContainer.addChild(menuRunnerOctopus);
+    }
+
     const title = new PIXI.Text({ text: "跳跳章魚", style: { fill: 0xffffff, fontSize: 48, fontWeight: 'bold' } });
     title.anchor.set(0.5);
     title.position.set(400, 100);
@@ -20,6 +57,13 @@ function initMenu() {
     app.stage.addChild(levelSelectContainer);
     levelSelectContainer.visible = false;
     levelSelectContainer.levelButtonsGroup = null; // 用來儲存按鈕容器以便更新
+
+    // 關卡選擇畫面動態海洋氣泡背景
+    let levelSelectBubbles = null;
+    if (typeof OceanBubbleSystem === 'function') {
+        levelSelectBubbles = new OceanBubbleSystem();
+        levelSelectContainer.addChild(levelSelectBubbles);
+    }
 
     // 3. 設定畫面
     settingsContainer = new PIXI.Container();
@@ -85,6 +129,58 @@ function initMenu() {
         }
     }));
     levelClearContainer.addChild(createMenuButton("返回關卡選擇", 400, 320, () => showScreen("LEVEL_SELECT"), 220));
+
+    // 5. 選單背景動畫 ticker
+    app.ticker.add((ticker) => {
+        const dt = ticker.deltaTime;
+        if (menuContainer && menuContainer.visible) {
+            // 更新水草與海葵波浪動畫
+            menuDecorations.forEach(dec => {
+                if (dec && typeof dec.update === 'function') dec.update(dt);
+            });
+
+            // 章魚快跑與跳躍過海葵邏輯
+            if (menuRunnerOctopus) {
+                // 加速奔跑 (速率提升至 4.2 * dt)
+                menuRunnerOctopus.x += 4.2 * dt;
+
+                // 靠近海葵時自動起跳
+                if (menuRunnerOctopus.x >= 550 && menuRunnerOctopus.x <= 570 && menuRunnerOctopus.isGrounded) {
+                    menuRunnerOctopus.vy = -9.2;
+                    menuRunnerOctopus.isGrounded = false;
+                }
+
+                // 物理重力與落地
+                if (!menuRunnerOctopus.isGrounded) {
+                    menuRunnerOctopus.vy += 0.45 * dt;
+                    menuRunnerOctopus.y += menuRunnerOctopus.vy * dt;
+
+                    if (menuRunnerOctopus.y >= groundY) {
+                        menuRunnerOctopus.y = groundY;
+                        menuRunnerOctopus.vy = 0;
+                        menuRunnerOctopus.isGrounded = true;
+                    }
+                }
+
+                // 離開右邊緣後循環重置
+                if (menuRunnerOctopus.x > 840) {
+                    menuRunnerOctopus.x = -40;
+                    menuRunnerOctopus.y = groundY;
+                    menuRunnerOctopus.vy = 0;
+                    menuRunnerOctopus.isGrounded = true;
+                }
+
+                if (typeof menuRunnerOctopus.updateState === 'function') {
+                    menuRunnerOctopus.updateState(dt, menuRunnerOctopus.vy, menuRunnerOctopus.isGrounded);
+                }
+            }
+        }
+        if (levelSelectContainer && levelSelectContainer.visible && levelSelectBubbles) {
+            if (typeof levelSelectBubbles.update === 'function') {
+                levelSelectBubbles.update(dt);
+            }
+        }
+    });
 
     showScreen("MENU");
 }
@@ -154,19 +250,19 @@ function updateLevelButtons() {
     const buttonsGroup = new PIXI.Container();
     levelSelectContainer.levelButtonsGroup = buttonsGroup;
 
-    const lvTitle = new PIXI.Text({ text: "選擇關卡", style: { fill: 0xffffff, fontSize: 32 } });
+    const lvTitle = new PIXI.Text({ text: "關卡選擇", style: { fill: 0xffffff, fontSize: 32 } });
     lvTitle.anchor.set(0.5);
-    lvTitle.position.set(400, 20);
+    lvTitle.position.set(400, 40);
     buttonsGroup.addChild(lvTitle);
 
-    // 顯示已解鎖的最高關卡
-    const maxUnlockedText = new PIXI.Text({
-        text: `已解鎖: 第 1-${window.progressManager.getMaxUnlockedLevel()} 關`,
-        style: { fill: 0x95a5a6, fontSize: 12 }
-    });
-    maxUnlockedText.anchor.set(0.5);
-    maxUnlockedText.position.set(400, 50);
-    buttonsGroup.addChild(maxUnlockedText);
+    // // 顯示已解鎖的最高關卡
+    // const maxUnlockedText = new PIXI.Text({
+    //     text: `已解鎖: 第 1-${window.progressManager.getMaxUnlockedLevel()} 關`,
+    //     style: { fill: 0x95a5a6, fontSize: 12 }
+    // });
+    // maxUnlockedText.anchor.set(0.5);
+    // maxUnlockedText.position.set(400, 50);
+    // buttonsGroup.addChild(maxUnlockedText);
 
     // 建立 5x5 網格的關卡按鈕
     for (let i = 1; i <= 25; i++) {
