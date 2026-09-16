@@ -6,7 +6,7 @@ function initMenu() {
     menuContainer = new PIXI.Container();
     app.stage.addChild(menuContainer);
 
-    const title = new PIXI.Text({ text: "跑跑小人手遊", style: { fill: 0xffffff, fontSize: 48, fontWeight: 'bold' } });
+    const title = new PIXI.Text({ text: "跳跳章魚", style: { fill: 0xffffff, fontSize: 48, fontWeight: 'bold' } });
     title.anchor.set(0.5);
     title.position.set(400, 100);
     menuContainer.addChild(title);
@@ -28,7 +28,7 @@ function initMenu() {
 
     const setLabel = new PIXI.Text({ text: "遊戲設定", style: { fill: 0xffffff, fontSize: 32, fontWeight: 'bold' } });
     setLabel.anchor.set(0.5); setLabel.position.set(400, 120);
-    
+
     // 建立自動下一關切換按鈕
     const autoNextBtn = createMenuButton(`自動下一關: ${isAutoNextEnabled ? "開啟" : "關閉"}`, 400, 200, () => {
         isAutoNextEnabled = !isAutoNextEnabled;
@@ -54,7 +54,7 @@ function initMenu() {
 
     // 1. 半透明背景遮罩
     const overlay = new PIXI.Graphics().rect(0, 0, 800, 450).fill(0x000000, 0.6);
-    overlay.eventMode = 'static'; 
+    overlay.eventMode = 'static';
     levelClearContainer.addChild(overlay);
 
     // 2. 中央視窗背景
@@ -160,9 +160,9 @@ function updateLevelButtons() {
     buttonsGroup.addChild(lvTitle);
 
     // 顯示已解鎖的最高關卡
-    const maxUnlockedText = new PIXI.Text({ 
+    const maxUnlockedText = new PIXI.Text({
         text: `已解鎖: 第 1-${window.progressManager.getMaxUnlockedLevel()} 關`,
-        style: { fill: 0x95a5a6, fontSize: 12 } 
+        style: { fill: 0x95a5a6, fontSize: 12 }
     });
     maxUnlockedText.anchor.set(0.5);
     maxUnlockedText.position.set(400, 50);
@@ -189,16 +189,16 @@ function updateLevelButtons() {
         }, isUnlocked, isCompleted);
         buttonsGroup.addChild(btn);
     }
-    
+
     // 只有在完成25關時才顯示特殊模式按鈕
     if (window.progressManager.isLevelCompleted(25)) {
         // 新增"挑戰"按鈕（在第21關下方）
         const challengeCount = window.progressManager.getChallengeClearCount();
         const challengeBtn = createSpecialModeButton(
-            "挑戰", 
-            180, 395, 
-            () => setupGame('CHALLENGE'), 
-            true, 
+            "挑戰",
+            180, 395,
+            () => setupGame('CHALLENGE'),
+            true,
             challengeCount > 0,
             `通關次數: ${challengeCount} 次`
         );
@@ -207,28 +207,28 @@ function updateLevelButtons() {
         // 新增"計時模式"按鈕（在第25關下方）
         const bestTimeMs = window.progressManager.getTimingBestTime();
         const isTimingCompleted = window.progressManager.isSpecialModeCompleted('TIMING');
-        const timingSubText = bestTimeMs !== null 
-            ? `最佳紀錄: ${window.progressManager.formatTime(bestTimeMs)}` 
+        const timingSubText = bestTimeMs !== null
+            ? `最佳紀錄: ${window.progressManager.formatTime(bestTimeMs)}`
             : `最佳紀錄: --:--.--`;
 
         const timingModeBtn = createSpecialModeButton(
-            "計時模式", 
-            620, 395, 
-            () => setupGame('TIMING'), 
-            true, 
+            "計時模式",
+            620, 395,
+            () => setupGame('TIMING'),
+            true,
             isTimingCompleted,
             timingSubText
         );
         buttonsGroup.addChild(timingModeBtn);
     }
-    
+
     buttonsGroup.addChild(createMenuButton("返回主選單", 400, 415, () => showScreen("MENU"), 160));
     levelSelectContainer.addChild(buttonsGroup);
 }
 
 function createMenuButton(label, x, y, callback, width = 200) {
     const btn = new PIXI.Container();
-    const bg = new PIXI.Graphics().roundRect(-width/2, -25, width, 50, 10).fill(0x34495e);
+    const bg = new PIXI.Graphics().roundRect(-width / 2, -25, width, 50, 10).fill(0x34495e);
     const txt = new PIXI.Text({ text: label, style: { fill: 0xffffff, fontSize: 20 } });
     txt.anchor.set(0.5);
     btn.addChild(bg, txt);
@@ -236,32 +236,32 @@ function createMenuButton(label, x, y, callback, width = 200) {
     btn.eventMode = 'static';
     btn.cursor = 'pointer';
     btn.on('pointerdown', callback);
-    
+
     // 滑鼠懸停效果
     btn.on('pointerover', () => bg.tint = 0x5dade2);
     btn.on('pointerout', () => bg.tint = 0xffffff);
-    
+
     return btn;
 }
 
 function createLevelButton(num, x, y, callback, isUnlocked = true, isCompleted = false) {
     const btn = new PIXI.Container();
-    
+
     // 根據解鎖狀態決定顏色
     let bgColor = isUnlocked ? 0x27ae60 : 0x7f8c8d;  // 綠色=已解鎖，灰色=鎖定
     if (isCompleted) {
         bgColor = 0xf39c12;  // 橙色=已完成
     }
-    
+
     const bg = new PIXI.Graphics().roundRect(-45, -20, 90, 40, 5).fill(bgColor);
-    
+
     // 關卡按鈕本身的文字
     let displayText = num.toString();
     const txt = new PIXI.Text({ text: displayText, style: { fill: 0xffffff, fontSize: 18, fontWeight: 'bold' } });
     txt.anchor.set(0.5);
     btn.addChild(bg, txt);
     btn.position.set(x, y);
-    
+
     if (isUnlocked) {
         // 已解鎖：可點擊
         btn.eventMode = 'static';
@@ -273,16 +273,16 @@ function createLevelButton(num, x, y, callback, isUnlocked = true, isCompleted =
         // 鎖定：不可點擊，顯示鎖頭圖標在左上角
         btn.eventMode = 'static';
         btn.cursor = 'not-allowed';
-        
+
         // 在按鈕的左上角添加鎖頭符號
-        const lockIcon = new PIXI.Text({ 
-            text: "🔒", 
-            style: { fontSize: 16 } 
+        const lockIcon = new PIXI.Text({
+            text: "🔒",
+            style: { fontSize: 16 }
         });
         lockIcon.anchor.set(0.5);
         lockIcon.position.set(-45, -20);  // 左上角位置
         btn.addChild(lockIcon);
-        
+
         // 鎖定狀態沒有懸停效果
         btn.on('pointerdown', (e) => {
             e.stopPropagation();
@@ -295,22 +295,22 @@ function createLevelButton(num, x, y, callback, isUnlocked = true, isCompleted =
 
 function createSpecialModeButton(label, x, y, callback, isUnlocked = false, isCompleted = false, subText = '') {
     const btn = new PIXI.Container();
-    
+
     // 根據解鎖狀態決定顏色
     let bgColor = isUnlocked ? 0x9b59b6 : 0x7f8c8d;  // 紫色=已解鎖，灰色=鎖定
-    
+
     const bg = new PIXI.Graphics().roundRect(-50, -22, 100, 44, 8).fill(bgColor);
-    
+
     const txt = new PIXI.Text({ text: label, style: { fill: 0xffffff, fontSize: 16, fontWeight: 'bold' } });
     txt.anchor.set(0.5);
     btn.addChild(bg, txt);
     btn.position.set(x, y);
-    
+
     // 如果已完成特殊模式，在右上角顯示皇冠圖示
     if (isCompleted) {
-        const crownIcon = new PIXI.Text({ 
-            text: "👑", 
-            style: { fontSize: 16 } 
+        const crownIcon = new PIXI.Text({
+            text: "👑",
+            style: { fontSize: 16 }
         });
         crownIcon.anchor.set(0.5);
         crownIcon.position.set(-45, -22);
@@ -327,7 +327,7 @@ function createSpecialModeButton(label, x, y, callback, isUnlocked = false, isCo
         subTxt.position.set(0, 25);
         btn.addChild(subTxt);
     }
-    
+
     if (isUnlocked) {
         // 已解鎖：可點擊
         btn.eventMode = 'static';

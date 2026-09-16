@@ -54,44 +54,44 @@ async function init() {
 }
 
 // 開發者快捷鍵：順序按下 C → R → E（1秒內完成）
-  const devMode = {
-    sequence: [],
-    lastKeyTime: 0,
-    timeout: 1000, // 1秒內要完成序列
-    targetSequence: ['c', 'r', 'e']
-  };
+const devMode = {
+  sequence: [],
+  lastKeyTime: 0,
+  timeout: 1000, // 1秒內要完成序列
+  targetSequence: ['c', 'r', 'e']
+};
 
-  document.addEventListener('keydown', (event) => {
-    const key = event.key.toLowerCase();
-    const now = Date.now();
-    
-    // 如果超過指定時間沒按鍵，重置序列
-    if (now - devMode.lastKeyTime > devMode.timeout) {
-      devMode.sequence = [];
-    }
-    
-    // 檢查是否是目標序列的下一個鍵
-    if (key === devMode.targetSequence[devMode.sequence.length]) {
-      devMode.sequence.push(key);
-      devMode.lastKeyTime = now;
-      
-      // 如果完成整個序列
-      if (devMode.sequence.length === devMode.targetSequence.length) {
-        if (confirm('🔓 開發者模式：確定要把所有25關設為已通關？')) {
-          // 標記所有25關為已完成
-          const progress = window.progressManager.getProgress();
-          progress.completedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
-          progress.unlockedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
-          localStorage.setItem(window.progressManager.storageKey, JSON.stringify(progress));
-          alert('✅ 所有25關已標記為通關！重新整理頁面後生效。');
-          location.reload();
-        }
-        devMode.sequence = []; // 重置序列
+document.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  const now = Date.now();
+
+  // 如果超過指定時間沒按鍵，重置序列
+  if (now - devMode.lastKeyTime > devMode.timeout) {
+    devMode.sequence = [];
+  }
+
+  // 檢查是否是目標序列的下一個鍵
+  if (key === devMode.targetSequence[devMode.sequence.length]) {
+    devMode.sequence.push(key);
+    devMode.lastKeyTime = now;
+
+    // 如果完成整個序列
+    if (devMode.sequence.length === devMode.targetSequence.length) {
+      if (confirm('🔓 開發者模式：確定要把所有25關設為已通關？')) {
+        // 標記所有25關為已完成
+        const progress = window.progressManager.getProgress();
+        progress.completedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
+        progress.unlockedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
+        localStorage.setItem(window.progressManager.storageKey, JSON.stringify(progress));
+        alert('✅ 所有25關已標記為通關！重新整理頁面後生效。');
+        location.reload();
       }
-    } else {
-      // 輸入了錯誤的鍵，重置序列
-      devMode.sequence = [];
+      devMode.sequence = []; // 重置序列
     }
+  } else {
+    // 輸入了錯誤的鍵，重置序列
+    devMode.sequence = [];
+  }
 });
 
 // 2. 遊戲變數
@@ -185,7 +185,7 @@ function loadLevel(levelNum) {
       graphics._isTouched = false;
     }
     window.gameContainer.addChild(graphics);
-    
+
     if (obj.type === 'speedup' || obj.type === 'speeddown') {
       speedZones.push(graphics);
     } else {
@@ -391,15 +391,15 @@ function update(ticker) {
     const wallBounds = wall.getBounds();
 
     if (wallBounds.width < 50) { // 這是牆壁
-      if (checkCollision(playerBounds, wallBounds) && 
-          playerBounds.y + playerBounds.height > wallBounds.y + 10) { // 只有非站在頂端時才反彈
-        
+      if (checkCollision(playerBounds, wallBounds) &&
+        playerBounds.y + playerBounds.height > wallBounds.y + 10) { // 只有非站在頂端時才反彈
+
         if (playerVelocityX > 0) {
           player.x = wallBounds.x - playerBounds.width;
         } else {
           player.x = wallBounds.x + wallBounds.width;
         }
-        
+
         playerVelocityX *= -1;
         break;
       }
@@ -486,12 +486,12 @@ function update(ticker) {
       }
     } else {
       gameState = "WIN";
-      
+
       // 只為數字型關卡標記進度
       if (typeof currentLevel === 'number' && window.progressManager) {
         window.progressManager.completeLevel(currentLevel);
       }
-      
+
       // 如果是挑戰關
       if (currentLevel === 'CHALLENGE') {
         if (window.progressManager) {
