@@ -92,43 +92,53 @@ function initMenu() {
     settingsContainer.addChild(createMenuButton("返回", 400, 340, () => showScreen("MENU")));
 
     // 4. 過關畫面
+    // 4. 過關畫面 (Level Clear Modal)
     levelClearContainer = new PIXI.Container();
     app.stage.addChild(levelClearContainer);
     levelClearContainer.visible = false;
 
-    // 1. 半透明背景遮罩
+    // 4.1 半透明背景遮罩
     const overlay = new PIXI.Graphics().rect(0, 0, 800, 450).fill(0x000000, 0.6);
     overlay.eventMode = 'static';
     levelClearContainer.addChild(overlay);
 
-    // 2. 中央視窗背景
+    // 4.2 中央彈窗背景 (400x220, 居中)
     const modalBase = new PIXI.Graphics()
-        .roundRect(200, 80, 400, 300, 20)
+        .roundRect(200, 115, 400, 220, 20)
         .fill(0x2c3e50)
         .stroke({ width: 4, color: 0xf1c40f });
     levelClearContainer.addChild(modalBase);
 
-    const clearTitle = new PIXI.Text({ text: "恭喜過關！", style: { fill: 0xf1c40f, fontSize: 40, fontWeight: 'bold' } });
+    // 4.3 主標題與副標題
+    const clearTitle = new PIXI.Text({ text: "恭喜過關", style: { fill: 0xf1c40f, fontSize: 40, fontWeight: 'bold' } });
     clearTitle.anchor.set(0.5);
-    clearTitle.position.set(400, 130);
-    levelClearContainer.addChild(clearTitle);
+    clearTitle.position.set(400, 165);
 
     const clearSubText = new PIXI.Text({ text: "", style: { fill: 0xffffff, fontSize: 16, align: 'center' } });
     clearSubText.anchor.set(0.5);
-    clearSubText.position.set(400, 190);
-    clearSubText.label = "clearSubText";
-    levelClearContainer.addChild(clearSubText);
+    clearSubText.position.set(400, 205);
 
-    // 初始化 - 總是創建兩個按鈕，動態調整交由 showScreen() 處理
-    levelClearContainer.addChild(createMenuButton("下一關", 400, 260, () => {
+    levelClearContainer.addChild(clearTitle, clearSubText);
+
+    // 4.4 操作按鈕
+    const nextBtn = createMenuButton("下一關", 400, 225, () => {
         if (currentLevel < 25) {
             setupGame(currentLevel + 1);
         } else {
-            alert("恭喜破關！\n 歡迎嘗試挑戰關卡及計時模式！");
+            alert("恭喜破關\n 歡迎嘗試挑戰關卡及計時模式！");
             showScreen("MENU");
         }
-    }));
-    levelClearContainer.addChild(createMenuButton("返回關卡選擇", 400, 320, () => showScreen("LEVEL_SELECT"), 220));
+    }, 220);
+
+    const returnBtn = createMenuButton("返回關卡選擇", 400, 280, () => showScreen("LEVEL_SELECT"), 220);
+
+    levelClearContainer.addChild(nextBtn, returnBtn);
+
+    // 將元件引用直接掛載於容器上，避免動態搜尋子節點
+    levelClearContainer.clearTitle = clearTitle;
+    levelClearContainer.clearSubText = clearSubText;
+    levelClearContainer.nextBtn = nextBtn;
+    levelClearContainer.returnBtn = returnBtn;
 
     // 5. 選單背景動畫 ticker
     app.ticker.add((ticker) => {
@@ -196,46 +206,52 @@ function showScreen(screen) {
         updateLevelButtons();
     }
 
-    // 當顯示過關畫面時，動態調整按鈕顯示與副標題
+    // 當顯示過關畫面時，動態更新彈窗內容與佈局
     if (screen === "LEVEL_CLEAR") {
-        let subTxt = null;
-        for (let child of levelClearContainer.children) {
-            if (child.label === "clearSubText") {
-                subTxt = child;
-                break;
-            }
-        }
-        if (subTxt) {
-            if (currentLevel === 'CHALLENGE') {
-                const count = window.progressManager ? window.progressManager.getChallengeClearCount() : 0;
-                subTxt.text = `挑戰成功！累積通關次數: ${count} 次`;
-            } else if (currentLevel === 'TIMING') {
-                const timeMs = typeof timingElapsedTime !== 'undefined' ? timingElapsedTime : 0;
-                const formattedTime = window.progressManager ? window.progressManager.formatTime(timeMs) : '';
-                const bestMs = window.progressManager ? window.progressManager.getTimingBestTime() : null;
-                const isNew = bestMs === timeMs;
-                subTxt.text = `計時模式通關！\n本次成績: ${formattedTime}${isNew ? ' (🎉 刷新紀錄!)' : ''}`;
-            } else {
-                subTxt.text = "";
-            }
-        }
-
-        // 獲取"下一關"按鈕和"返回關卡選擇"按鈕
-        const buttons = levelClearContainer.children.filter(c => c instanceof PIXI.Container && c.cursor === 'pointer');
-        for (let btn of buttons) {
-            const btnText = btn.children[1]?.text;
-            if (btnText === "下一關") {
-                btn.visible = (currentLevel !== 'CHALLENGE' && currentLevel !== 'TIMING');
-            }
-            if (btnText === "返回關卡選擇") {
-                btn.position.y = (currentLevel === 'CHALLENGE' || currentLevel === 'TIMING') ? 280 : 320;
-            }
-        }
+        updateClearModalLayout();
     }
 
     if (window.gameContainer) {
         // 當過關時，背景依然顯示遊戲內容
         window.gameContainer.visible = (screen === "GAME" || screen === "LEVEL_CLEAR");
+    }
+}
+
+// 根據不同遊戲模式更新過關彈窗 (Level Clear Modal) 的內容與排版
+function updateClearModalLayout() {
+    const { clearTitle, clearSubText, nextBtn, returnBtn } = levelClearContainer;
+    if (!clearTitle || !clearSubText || !nextBtn || !returnBtn) return;
+
+    if (currentLevel === 'TIMING') {
+        // 【計時模式】標題在 y=160、成績在 y=205、單按鈕在 y=265
+        clearTitle.position.set(400, 160);
+        const timeMs = typeof timingElapsedTime !== 'undefined' ? timingElapsedTime : 0;
+        const formattedTime = window.progressManager ? window.progressManager.formatTime(timeMs) : '';
+        const bestMs = window.progressManager ? window.progressManager.getTimingBestTime() : null;
+        const isNew = bestMs === timeMs;
+        clearSubText.text = `本次成績: ${formattedTime}${isNew ? ' (新紀錄!)' : ''}`;
+        clearSubText.position.set(400, 205);
+
+        nextBtn.visible = false;
+        returnBtn.visible = true;
+        returnBtn.position.set(400, 265);
+    } else if (currentLevel === 'CHALLENGE') {
+        // 【挑戰模式】標題在 y=175、無副標題、單按鈕在 y=250
+        clearTitle.position.set(400, 175);
+        clearSubText.text = "";
+
+        nextBtn.visible = false;
+        returnBtn.visible = true;
+        returnBtn.position.set(400, 250);
+    } else {
+        // 【一般關卡】標題在 y=165、無副標題、雙按鈕在 y=225 與 y=280
+        clearTitle.position.set(400, 165);
+        clearSubText.text = "";
+
+        nextBtn.visible = true;
+        nextBtn.position.set(400, 225);
+        returnBtn.visible = true;
+        returnBtn.position.set(400, 280);
     }
 }
 
@@ -324,7 +340,14 @@ function updateLevelButtons() {
 
 function createMenuButton(label, x, y, callback, width = 200) {
     const btn = new PIXI.Container();
-    const bg = new PIXI.Graphics().roundRect(-width / 2, -25, width, 50, 10).fill(0x34495e);
+    const drawBg = (strokeColor) => {
+        bg.clear()
+            .roundRect(-width / 2, -25, width, 50, 10)
+            .fill(0x34495e)
+            .stroke({ width: 3, color: strokeColor });
+    };
+    const bg = new PIXI.Graphics();
+    drawBg(0xff7675);
     const txt = new PIXI.Text({ text: label, style: { fill: 0xffffff, fontSize: 20 } });
     txt.anchor.set(0.5);
     btn.addChild(bg, txt);
@@ -333,9 +356,15 @@ function createMenuButton(label, x, y, callback, width = 200) {
     btn.cursor = 'pointer';
     btn.on('pointerdown', callback);
 
-    // 滑鼠懸停效果
-    btn.on('pointerover', () => bg.tint = 0x5dade2);
-    btn.on('pointerout', () => bg.tint = 0xffffff);
+    // 滑鼠懸停效果：背景微亮 + 邊框變金色
+    btn.on('pointerover', () => {
+        bg.tint = 0x5dade2;
+        drawBg(0xf9ca24);
+    });
+    btn.on('pointerout', () => {
+        bg.tint = 0xffffff;
+        drawBg(0xff7675);
+    });
 
     return btn;
 }

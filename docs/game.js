@@ -53,45 +53,84 @@ async function init() {
   }
 }
 
-// 開發者快捷鍵：順序按下 C → R → E（1秒內完成）
+// 開發者快捷鍵：
+// 1. 順序按下 C → R → E (1秒內)：將所有 25 關標記為已通關
+// 2. 順序按下 F → I → N 或同時按下 F+I+N：立即通關當前關卡 / 計時模式
 const devMode = {
   sequence: [],
   lastKeyTime: 0,
-  timeout: 1000, // 1秒內要完成序列
-  targetSequence: ['c', 'r', 'e']
+  timeout: 1000
 };
+const keysPressed = {};
+
+function instantClearLevel() {
+  if (typeof gameState === 'undefined' || (gameState !== "PLAYING" && gameState !== "GAME")) return;
+  console.log("⚡ [DevMode] FIN shortcut triggered - instant level clear!");
+  if (isTimingMode) {
+    gameState = "WIN";
+    timingElapsedTime = Date.now() - timingStartTime;
+    if (window.progressManager) {
+      window.progressManager.completeSpecialMode('TIMING', timingElapsedTime);
+    }
+    currentLevel = 'TIMING';
+    if (typeof showScreen === 'function') {
+      showScreen('LEVEL_CLEAR');
+    }
+  } else {
+    gameState = "WIN";
+    if (typeof currentLevel === 'number' && window.progressManager) {
+      window.progressManager.completeLevel(currentLevel);
+    }
+    if (currentLevel === 'CHALLENGE' && window.progressManager) {
+      window.progressManager.completeSpecialMode('CHALLENGE');
+    }
+    if (typeof showScreen === 'function') {
+      showScreen('LEVEL_CLEAR');
+    }
+  }
+}
 
 document.addEventListener('keydown', (event) => {
   const key = event.key.toLowerCase();
-  const now = Date.now();
+  keysPressed[key] = true;
 
-  // 如果超過指定時間沒按鍵，重置序列
+  // 同時按下 F + I + N
+  if (keysPressed['f'] && keysPressed['i'] && keysPressed['n']) {
+    instantClearLevel();
+    keysPressed['f'] = false;
+    keysPressed['i'] = false;
+    keysPressed['n'] = false;
+    return;
+  }
+
+  // 順序按下鍵
+  const now = Date.now();
   if (now - devMode.lastKeyTime > devMode.timeout) {
     devMode.sequence = [];
   }
 
-  // 檢查是否是目標序列的下一個鍵
-  if (key === devMode.targetSequence[devMode.sequence.length]) {
-    devMode.sequence.push(key);
-    devMode.lastKeyTime = now;
+  devMode.sequence.push(key);
+  devMode.lastKeyTime = now;
+  const seqStr = devMode.sequence.join('');
 
-    // 如果完成整個序列
-    if (devMode.sequence.length === devMode.targetSequence.length) {
-      if (confirm('🔓 開發者模式：確定要把所有25關設為已通關？')) {
-        // 標記所有25關為已完成
-        const progress = window.progressManager.getProgress();
-        progress.completedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
-        progress.unlockedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
-        localStorage.setItem(window.progressManager.storageKey, JSON.stringify(progress));
-        alert('✅ 所有25關已標記為通關！重新整理頁面後生效。');
-        location.reload();
-      }
-      devMode.sequence = []; // 重置序列
+  if (seqStr.endsWith('cre')) {
+    if (confirm('🔓 開發者模式：確定要把所有25關設為已通關？')) {
+      const progress = window.progressManager.getProgress();
+      progress.completedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
+      progress.unlockedLevels = Array.from({ length: 25 }, (_, i) => i + 1);
+      localStorage.setItem(window.progressManager.storageKey, JSON.stringify(progress));
+      alert('✅ 所有25關已標記為通關！重新整理頁面後生效。');
+      location.reload();
     }
-  } else {
-    // 輸入了錯誤的鍵，重置序列
+    devMode.sequence = [];
+  } else if (seqStr.endsWith('fin')) {
+    instantClearLevel();
     devMode.sequence = [];
   }
+});
+
+document.addEventListener('keyup', (event) => {
+  keysPressed[event.key.toLowerCase()] = false;
 });
 
 // 2. 遊戲變數
