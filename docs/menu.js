@@ -92,7 +92,6 @@ function initMenu() {
     settingsContainer.addChild(createMenuButton("返回", 400, 340, () => showScreen("MENU")));
 
     // 4. 過關畫面
-    // 4. 過關畫面 (Level Clear Modal)
     levelClearContainer = new PIXI.Container();
     app.stage.addChild(levelClearContainer);
     levelClearContainer.visible = false;
@@ -106,7 +105,7 @@ function initMenu() {
     const modalBase = new PIXI.Graphics()
         .roundRect(200, 115, 400, 220, 20)
         .fill(0x2c3e50)
-        .stroke({ width: 4, color: 0xf1c40f });
+        .stroke({ width: 4, color: 0x16a085 });
     levelClearContainer.addChild(modalBase);
 
     // 4.3 主標題與副標題
@@ -224,17 +223,17 @@ function updateClearModalLayout() {
 
     if (currentLevel === 'TIMING') {
         // 【計時模式】標題在 y=160、成績在 y=205、單按鈕在 y=265
-        clearTitle.position.set(400, 160);
+        clearTitle.position.set(400, 170);
         const timeMs = typeof timingElapsedTime !== 'undefined' ? timingElapsedTime : 0;
         const formattedTime = window.progressManager ? window.progressManager.formatTime(timeMs) : '';
         const bestMs = window.progressManager ? window.progressManager.getTimingBestTime() : null;
         const isNew = bestMs === timeMs;
         clearSubText.text = `本次成績: ${formattedTime}${isNew ? ' (新紀錄!)' : ''}`;
-        clearSubText.position.set(400, 205);
+        clearSubText.position.set(400, 210);
 
         nextBtn.visible = false;
         returnBtn.visible = true;
-        returnBtn.position.set(400, 265);
+        returnBtn.position.set(400, 270);
     } else if (currentLevel === 'CHALLENGE') {
         // 【挑戰模式】標題在 y=175、無副標題、單按鈕在 y=250
         clearTitle.position.set(400, 175);
@@ -266,7 +265,7 @@ function updateLevelButtons() {
     const buttonsGroup = new PIXI.Container();
     levelSelectContainer.levelButtonsGroup = buttonsGroup;
 
-    const lvTitle = new PIXI.Text({ text: "關卡選擇", style: { fill: 0xffffff, fontSize: 32 } });
+    const lvTitle = new PIXI.Text({ text: "關卡選擇", style: { fill: 0xffffff, fontSize: 32, fontWeight: 'bold' } });
     lvTitle.anchor.set(0.5);
     lvTitle.position.set(400, 40);
     buttonsGroup.addChild(lvTitle);
@@ -347,7 +346,7 @@ function createMenuButton(label, x, y, callback, width = 200) {
             .stroke({ width: 3, color: strokeColor });
     };
     const bg = new PIXI.Graphics();
-    drawBg(0xff7675);
+    drawBg(0x16a085);
     const txt = new PIXI.Text({ text: label, style: { fill: 0xffffff, fontSize: 20 } });
     txt.anchor.set(0.5);
     btn.addChild(bg, txt);
@@ -363,7 +362,7 @@ function createMenuButton(label, x, y, callback, width = 200) {
     });
     btn.on('pointerout', () => {
         bg.tint = 0xffffff;
-        drawBg(0xff7675);
+        drawBg(0x16a085);
     });
 
     return btn;
