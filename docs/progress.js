@@ -175,6 +175,128 @@ class ProgressManager {
     const msStr = String(ms).padStart(2, '0');
     return `${mmStr}:${ssStr}.${msStr}`;
   }
+
+  // --- 新增：玩家暱稱管理 ---
+  getNickname() {
+    const progress = this.getProgress();
+    return progress.nickname || null;
+  }
+
+  setNickname(name) {
+    const cleanName = (name || "").trim().substring(0, 12);
+    if (!cleanName) return false;
+    const progress = this.getProgress();
+    progress.nickname = cleanName;
+    localStorage.setItem(this.storageKey, JSON.stringify(progress));
+
+    // 同步更新 Firebase (作法 B)
+    if (typeof updateUserProfile === 'function') {
+      updateUserProfile(cleanName);
+    }
+    return true;
+  }
+
+  // --- 新增：墨汁 (體力) 系統管理 ---
+  getTaiwanDateInfo() {
+    const now = new Date();
+    const utc8Ms = now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000);
+    const twDate = new Date(utc8Ms);
+    const year = twDate.getFullYear();
+    const month = String(twDate.getMonth() + 1).padStart(2, '0');
+    const date = String(twDate.getDate()).padStart(2, '0');
+    const hours = twDate.getHours();
+    return {
+      dateStr: `${year}-${month}-${date}`,
+      isPastNoon: hours >= 12
+    };
+  }
+
+  checkAndRestoreInk() {
+    const progress = this.getProgress();
+    if (progress.inkCount === undefined) progress.inkCount = 3;
+    if (progress.lastInkRestoreDate === undefined) progress.lastInkRestoreDate = null;
+
+    const twInfo = this.getTaiwanDateInfo();
+    let updated = false;
+
+    // 若當前已過每日中午 12:00 且今天尚未領取自動恢復
+    if (twInfo.isPastNoon && progress.lastInkRestoreDate !== twInfo.dateStr) {
+      if (progress.inkCount < 3) {
+        progress.inkCount = Math.min(3, progress.inkCount + 1);
+        updated = true;
+      }
+      progress.lastInkRestoreDate = twInfo.dateStr;
+      localStorage.setItem(this.storageKey, JSON.stringify(progress));
+    }
+    return progress.inkCount;
+  }
+
+  getInkCount() {
+    this.checkAndRestoreInk();
+    const progress = this.getProgress();
+    return progress.inkCount !== undefined ? progress.inkCount : 3;
+  }
+
+  useInk() {
+    const currentInk = this.getInkCount();
+    if (currentInk <= 0) return false;
+    const progress = this.getProgress();
+    progress.inkCount = currentInk - 1;
+    localStorage.setItem(this.storageKey, JSON.stringify(progress));
+    return true;
+  }
+
+  addInk(amount = 1) {
+    const progress = this.getProgress();
+    const currentInk = progress.inkCount !== undefined ? progress.inkCount : 3;
+    progress.inkCount = Math.min(3, currentInk + amount);
+    localStorage.setItem(this.storageKey, JSON.stringify(progress));
+    return progress.inkCount;
+  }
+
+  // 看廣告恢復墨汁
+  watchRewardAdForInk(callback) {
+    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
+      console.log("[AdMob] 撥放測試獎勵影片廣告...");
+      // Capacitor AdMob 整合點
+      setTimeout(() => {
+        this.addInk(1);
+        if (callback) callback({ success: true, inkCount: this.getInkCount() });
+      }, 1000);
+    } else {
+      // 網頁版/模擬看廣告
+      const confirmed = confirm("觀看廣告模擬影片？\n(按下確定完成播放可獲得 1 點墨汁)");
+      if (confirmed) {
+        this.addInk(1);
+        alert("感謝觀看！墨汁 +1");
+        if (callback) callback({ success: true, inkCount: this.getInkCount() });
+      } else {
+        if (callback) callback({ success: false });
+      }
+    }
+  }
+
+  // --- 新增：每周挑戰成績管理 ---
+  getWeeklyBestTime(weekKey) {
+    const progress = this.getProgress();
+    if (!progress.weeklyBests) return null;
+    const wk = weekKey || (typeof getWeekKey === 'function' ? getWeekKey() : 'current');
+    return progress.weeklyBests[wk] || null;
+  }
+
+  saveWeeklyBestTime(timeMs, weekKey) {
+    const progress = this.getProgress();
+    if (!progress.weeklyBests) progress.weeklyBests = {};
+    const wk = weekKey || (typeof getWeekKey === 'function' ? getWeekKey() : 'current');
+
+    let isNewBest = false;
+    if (!progress.weeklyBests[wk] || timeMs < progress.weeklyBests[wk]) {
+      progress.weeklyBests[wk] = timeMs;
+      isNewBest = true;
+    }
+    localStorage.setItem(this.storageKey, JSON.stringify(progress));
+    return isNewBest;
+  }
 }
 
 // 創建全域進度管理器實例

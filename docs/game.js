@@ -66,7 +66,21 @@ const keysPressed = {};
 function instantClearLevel() {
   if (typeof gameState === 'undefined' || (gameState !== "PLAYING" && gameState !== "GAME")) return;
   console.log("⚡ [DevMode] FIN shortcut triggered - instant level clear!");
-  if (isTimingMode) {
+  if (isWeeklyChallengeMode) {
+    gameState = "WIN";
+    weeklyChallengeElapsedTime = Date.now() - weeklyChallengeStartTime;
+    const weekKey = typeof getWeekKey === 'function' ? getWeekKey() : 'current';
+    if (window.progressManager) {
+      window.progressManager.saveWeeklyBestTime(weeklyChallengeElapsedTime, weekKey);
+    }
+    if (typeof submitWeeklyScore === 'function') {
+      submitWeeklyScore(weeklyChallengeElapsedTime);
+    }
+    currentLevel = 'WEEKLY';
+    if (typeof showScreen === 'function') {
+      showScreen('LEVEL_CLEAR');
+    }
+  } else if (isTimingMode) {
     gameState = "WIN";
     timingElapsedTime = Date.now() - timingStartTime;
     if (window.progressManager) {
@@ -143,11 +157,78 @@ let gameState = "MENU";
 let currentLevel = 0;
 let isAutoNextEnabled = false; // 自動進入下一關的開關
 
-// 計時模式相關變數
+// 計時模式相關變數 (歷史相容)
 let isTimingMode = false;
 let timingCurrentLevel = 1;
 let timingStartTime = 0;
 let timingElapsedTime = 0;
+
+// 每周挑戰相關變數
+let isWeeklyChallengeMode = false;
+let weeklyChallengeLevels = [1, 6, 11, 16, 21];
+let weeklyChallengeCurrentIndex = 0;
+let weeklyChallengeStartTime = 0;
+let weeklyChallengeElapsedTime = 0;
+
+// 純偽隨機數產生器 (Mulberry32)
+function seededPRNG(seed) {
+  return function () {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// 確定性每週關卡抽籤演算法
+function getWeeklyChallengeLevels(dateObj = new Date()) {
+  const weekKey = typeof getWeekKey === 'function' ? getWeekKey(dateObj) : "2026_W38";
+  let weekNum = parseInt(weekKey.replace(/[^0-9]/g, ''), 10) || 202638;
+
+  const prevDate = new Date(dateObj.getTime() - 7 * 86400000);
+  const prevWeekKey = typeof getWeekKey === 'function' ? getWeekKey(prevDate) : "2026_W37";
+  let prevWeekNum = parseInt(prevWeekKey.replace(/[^0-9]/g, ''), 10) || 202637;
+
+  const brackets = [
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25]
+  ];
+
+  const prevRnd = seededPRNG(prevWeekNum);
+  const currentRnd = seededPRNG(weekNum);
+
+  const selectedLevels = [];
+  for (let k = 0; k < 5; k++) {
+    const prevOffset = Math.floor(prevRnd() * 5);
+    const r = Math.floor(currentRnd() * 4);
+    const currentOffset = (prevOffset + 1 + r) % 5;
+    selectedLevels.push(brackets[k][currentOffset]);
+  }
+  return { weekKey, levels: selectedLevels };
+}
+
+// 發起每週挑戰
+function startWeeklyChallenge() {
+  if (!window.progressManager || window.progressManager.getInkCount() <= 0) {
+    alert("墨汁不足！無法發起每週挑戰。");
+    return false;
+  }
+
+  window.progressManager.useInk();
+
+  const challengeData = getWeeklyChallengeLevels();
+  weeklyChallengeLevels = challengeData.levels;
+  weeklyChallengeCurrentIndex = 0;
+  weeklyChallengeStartTime = Date.now();
+  isWeeklyChallengeMode = true;
+  isTimingMode = false;
+
+  loadLevel(weeklyChallengeLevels[0]);
+  return true;
+}
 let timerHudText = null;
 let timingExitModalContainer = null;
 
@@ -506,7 +587,28 @@ function update(ticker) {
 
   // 終點
   if (checkCollision(player.getBounds(), goal.getBounds())) {
-    if (isTimingMode) {
+    if (isWeeklyChallengeMode) {
+      if (weeklyChallengeCurrentIndex < 4) {
+        // 無縫進入每周挑戰的下一關
+        weeklyChallengeCurrentIndex++;
+        loadLevel(weeklyChallengeLevels[weeklyChallengeCurrentIndex]);
+      } else {
+        // 完成每週 5 關挑戰！
+        gameState = "WIN";
+        weeklyChallengeElapsedTime = Date.now() - weeklyChallengeStartTime;
+        const weekKey = typeof getWeekKey === 'function' ? getWeekKey() : 'current';
+        if (window.progressManager) {
+          window.progressManager.saveWeeklyBestTime(weeklyChallengeElapsedTime, weekKey);
+        }
+        if (typeof submitWeeklyScore === 'function') {
+          submitWeeklyScore(weeklyChallengeElapsedTime);
+        }
+        currentLevel = 'WEEKLY';
+        if (typeof showScreen === 'function') {
+          showScreen('LEVEL_CLEAR');
+        }
+      }
+    } else if (isTimingMode) {
       if (timingCurrentLevel < 25) {
         // Option A: 無縫進入下一關
         timingCurrentLevel++;
