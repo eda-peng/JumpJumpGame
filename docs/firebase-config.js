@@ -1,7 +1,7 @@
 // firebase-config.js - Firebase 連線與排行榜 API 模組
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDemoPlaceholderKeyForJumpJumpGame",
+    apiKey: "YOUR_FIREBASE_API_KEY",
     authDomain: "jumpjumpgame-demo.firebaseapp.com",
     databaseURL: "https://jumpjumpgame-demo-default-rtdb.firebaseio.com",
     projectId: "jumpjumpgame-demo",
